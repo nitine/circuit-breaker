@@ -5,7 +5,6 @@ import { Room } from "~/room/Room";
 import { useRoom } from "~/room/roomStore";
 import { Topbar } from "~/components/Topbar";
 import { api } from "~/shared/api";
-import { portraitDataUrl, PALETTES } from "~/room/sprites";
 import type { DeviceKind } from "~/shared/types";
 import pagesCss from "~/styles/pages.css?url";
 
@@ -22,9 +21,7 @@ function Picker() {
   const [family, setFamily] = useState<string>("digital-arrest");
   const [device, setDevice] = useState<DeviceKind | "auto">("auto");
   const [hard, setHard] = useState(false);
-  const [portraits, setPortraits] = useState<Record<string, string>>({});
   useEffect(() => { const r = useRoom.getState(); r.reset(); r.setMode("dimmed"); }, []);
-  useEffect(() => { const out: Record<string, string> = {}; for (const k of Object.keys(PALETTES)) out[k] = portraitDataUrl(k as keyof typeof PALETTES); setPortraits(out); }, []);
   useEffect(() => { const p = cat.data?.personas.find((x) => x.id === personaId); if (p) setFamily(p.defaultFamily); }, [personaId, cat.data]);
   const create = useMutation({
     mutationFn: () => api.createDrill({ personaId: personaId === "custom" ? undefined : personaId, personaText: personaId === "custom" ? custom : undefined, family: family as never, device, hardMode: hard }),
@@ -47,12 +44,12 @@ function Picker() {
           <div className="personas">
             {cat.data?.personas.map((p) => (
               <button key={p.id} className={`persona ${personaId === p.id ? "on" : ""}`} onClick={() => setPersonaId(p.id)}>
-                {portraits[p.sprite] && <img src={portraits[p.sprite]} alt="" />}
+                <img src={`/room/sprites/${p.sprite}.png`} alt="" />
                 <b>{p.name}, {p.age}</b><span>{p.blurb}</span>
               </button>
             ))}
             <div className={`persona ${personaId === "custom" ? "on" : ""}`} onClick={() => setPersonaId("custom")} role="button">
-              {portraits.custom && <img src={portraits.custom} alt="" />}
+              <img src="/room/sprites/custom.png" alt="" />
               <b>+ Your own</b>
               <textarea placeholder={"\"I'm 22, just moved to Pune for a BPO job, mother is sick…\""} value={custom} onChange={(e) => { setCustom(e.target.value); setPersonaId("custom"); }} />
               <span style={{ color: "#1f5fbf" }}>{cat.data?.features.bedrock ? "Bedrock builds the phone from this." : "Local mode: a template phone is built from this."}</span>

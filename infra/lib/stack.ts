@@ -130,8 +130,8 @@ export class CircuitBreakerStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, "Url", { value: `https://${dist.distributionDomainName}` });
     new cdk.CfnOutput(this, "AlbUrl", { value: `http://${service.loadBalancer.loadBalancerDnsName}` });
-    new cdk.CfnOutput(this, "Table", { value: table.tableName });
-    new cdk.CfnOutput(this, "Bucket", { value: bucket.bucketName });
-    new cdk.CfnOutput(this, "Bus", { value: bus.eventBusName });
+    new cdk.CfnOutput(this, "TableName", { value: table.tableName });
+    new cdk.CfnOutput(this, "BucketName", { value: bucket.bucketName });
+    new cdk.CfnOutput(this, "BusName", { value: bus.eventBusName });
   }
 }

@@ -15,7 +15,7 @@ function Landing() {
   return (
     <div className="landing">
       <div className="hero-room">
-        <Room />
+        <Room hideBubblesLeftOf={760} />
         <div className="ground" />
         <Topbar />
         <div className="hero">

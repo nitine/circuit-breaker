@@ -41,7 +41,7 @@ button { font-family: inherit; cursor: pointer; }
 .room-cam { position: absolute; inset: 0; transform-origin: 18% 92%; transition: transform 1.2s cubic-bezier(.4,0,.2,1); }
 .room-cam.push { transform: scale(1.18); transform-origin: 30% 78%; }
 .room-cam.desk { transform: scale(1.45); transform-origin: 14% 96%; }
-.room-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.room-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; image-rendering: auto; }
 .room-overlay { position: absolute; inset: 0; pointer-events: none; }
 .room-dim { position: absolute; inset: 0; background: #0b0a08; opacity: 0; transition: opacity .8s; pointer-events: none; }
 .room-frame.dimmed .room-dim { opacity: .72; }

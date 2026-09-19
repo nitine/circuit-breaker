@@ -3,9 +3,10 @@ import type { AgentName } from "~/shared/types";
 import { RoomCanvas } from "./RoomCanvas";
 import { sim, useRoom } from "./roomStore";
 import { W, H, OBJ, AGENT_LABEL } from "./layout";
+import { SCENE } from "./scene";
 
-export function Room({ children, camera = "none", showHud = false, interactiveHover, onHover, className = "" }: {
-  children?: ReactNode; camera?: "none" | "push" | "desk"; showHud?: boolean; interactiveHover?: boolean; onHover?: (o: string | null) => void; className?: string;
+export function Room({ children, camera = "none", showHud = false, interactiveHover, onHover, className = "", hideBubblesLeftOf = 0 }: {
+  children?: ReactNode; camera?: "none" | "push" | "desk"; showHud?: boolean; interactiveHover?: boolean; onHover?: (o: string | null) => void; className?: string; hideBubblesLeftOf?: number;
 }) {
   const frameRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -34,15 +35,15 @@ export function Room({ children, camera = "none", showHud = false, interactiveHo
         <div className="room-overlay" style={{ transform: "none" }}>
           {(Object.keys(sim.agents) as AgentName[]).map((a) => {
             const b = bubbles[a]; const ag = sim.agents[a];
-            const show = b && b.until > now;
+            const show = b && b.until > now && ag.x >= hideBubblesLeftOf;
             return (
-              <div key={a} className={`bubble ${show ? "show" : ""} ${b?.hot ? "hot" : ""}`} style={{ left: ag.x * scale, top: (ag.y - 19) * scale, fontSize: Math.max(11, 7 * scale) }}>
+              <div key={a} className={`bubble ${show ? "show" : ""} ${b?.hot ? "hot" : ""}`} style={{ left: ag.x * scale, top: (ag.y - SCENE.spriteHeight - 8) * scale, fontSize: Math.max(11, 26 * scale) }}>
                 <span style={{ opacity: .6, fontSize: "0.8em" }}>{AGENT_LABEL[a]} · </span>{b?.text}
               </div>
             );
           })}
           {crt.length > 0 && (
-            <div className="crt-text" style={{ left: OBJ.crt.x * scale, top: OBJ.crt.y * scale, width: OBJ.crt.w * scale, height: OBJ.crt.h * scale, fontSize: Math.max(8, 3.6 * scale) }}>
+            <div className="crt-text" style={{ left: (OBJ.crt.x + 10) * scale, top: (OBJ.crt.y + 10) * scale, width: (OBJ.crt.w - 20) * scale, height: (OBJ.crt.h - 20) * scale, fontSize: Math.max(8, 15 * scale) }}>
               {crt.slice(-4).map((l, i) => <div key={i}><span className={l.who === "judge" ? "me" : "who"}>{l.who === "judge" ? "YOU" : l.who === "member" ? "GRP" : "CALL"}</span> {l.text.slice(0, 60)}</div>)}
             </div>
           )}

@@ -25,7 +25,7 @@ const ITEMS: { key: string; object: string; agent: string; service: string; body
 
 function How() {
   const [hover, setHover] = useState<string | null>(null);
-  const [pinned, setPinned] = useState<string | null>("board");
+  const [pinned, setPinned] = useState<string | null>(typeof location !== "undefined" && location.search.includes("nopin") ? null : "board");
   useEffect(() => { const r = useRoom.getState(); r.reset(); r.setMode("exploded"); r.setPhone(false, false); }, []);
   const key = hover ?? pinned;
   const item = ITEMS.find((i) => i.key === key || (key && ["listener", "analyst", "archivist", "guardian", "reporter"].includes(key) && i.agent.toLowerCase() === key));

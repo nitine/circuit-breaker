@@ -51,7 +51,8 @@ The How it works page in the app is this table, interactive: hover any object in
 ```
 app/        TanStack Start app
   src/routes/           pages and API file routes
-  src/room/             the pixel room: canvas renderer, sprites, store
+  src/room/             the room: generated render as background, keyed sprites, overlays, store
+  public/room/          room.png and the ten character sprites (generated, green-keyed with tools/key_sprites.py)
   src/devices/          One UI and Windows 11 replicas
   server/lib/           engine: analyst, archivist, guardian, red agent, listener, reporter, session
   server/routes/ws.ts   the drill WebSocket (Nitro)
