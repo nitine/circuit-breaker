@@ -3,27 +3,143 @@
   "label": "Loan app KYC",
   "device": "phone",
   "channel": "whatsapp-voice",
-  "caller": { "name": "Recovery Dept", "org": "QuickRupee Loans", "avatar": "agent", "number": "+91 98XXX XXXXX", "voice": "hi-IN-male" },
-  "hookKeywords": ["loan", "kyc", "quickrupee", "emi", "repay", "default", "contacts"],
-  "hookSms": { "sender": "VM-QKRUPE", "text": "QuickRupee: Your KYC verification is INCOMPLETE. Loan account QR-88213 will be marked DEFAULT tonight. Complete now: qkrupee.in/kyc" },
-  "phases": [
-    { "id": "hook", "goal": "Claim the KYC failed and the loan is in default", "tactics": ["AUTHORITY", "PERSONALISATION"], "maxTurns": 2,
-      "openers": ["Rehana Begum? This is the recovery department at QuickRupee. Your KYC on loan account QR-88213 has failed. The eight thousand you took in March is showing as unpaid in our system."],
-      "resist": ["Madam, whatever you paid is not reflecting because KYC was not completed. Until KYC is done the system shows default. I am calling to help you fix it."] },
-    { "id": "fear", "goal": "Threaten contacts and legal action", "tactics": ["FEAR", "ISOLATION"], "maxTurns": 2,
-      "openers": ["If the default is not cleared tonight, the app will send the notice to all your contacts. Your supervisor, your children's teacher, everyone. Do not discuss this with anyone, it will make the case worse."],
-      "resist": ["Madam, I am not threatening, I am telling you what the app does automatically. Your husband works nights, no? You do not want him getting the message at work."] },
-    { "id": "control", "goal": "Get the link opened and permissions granted", "tactics": ["CONTROL", "URGENCY"], "maxTurns": 3,
-      "openers": ["Open the link I sent by SMS. It will ask for contacts and photo permission, that is for KYC only. Allow it, then the default is removed in five minutes."],
-      "resist": ["Madam, without permission the KYC cannot complete. Every app asks for it. Allow it and I will clear your name right now."] },
-    { "id": "extraction", "goal": "Get a processing fee paid", "tactics": ["PAYMENT_STEERING", "URGENCY", "FEAR"], "maxTurns": 4,
-      "openers": ["There is a KYC processing fee of one thousand four hundred ninety-nine. Pay it by UPI to the number on the link and the default is cleared before your husband comes home."],
-      "resist": ["Madam, one thousand four hundred is nothing compared to what happens if the notice goes out. Pay now, I will stay on the line."] }
+  "caller": {
+    "name": "Recovery Dept",
+    "org": "QuickRupee Loans",
+    "avatar": "agent",
+    "number": "+91 98XXX XXXXX",
+    "voice": "hi-IN-male"
+  },
+  "hookKeywords": [
+    "loan",
+    "kyc",
+    "quickrupee",
+    "emi",
+    "repay",
+    "default",
+    "contacts"
   ],
-  "winConditions": [ { "kind": "payment_tapped" }, { "kind": "duration", "seconds": 600 } ],
+  "hookSms": {
+    "sender": "VM-QKRUPE",
+    "text": "QuickRupee: Your KYC verification is INCOMPLETE. Loan account QR-88213 will be marked DEFAULT tonight. Complete now: qkrupee.in/kyc"
+  },
+  "phases": [
+    {
+      "id": "hook",
+      "goal": "Claim the KYC failed and the loan is in default",
+      "tactics": [
+        "AUTHORITY",
+        "PERSONALISATION"
+      ],
+      "maxTurns": 2,
+      "openers": [
+        "Rehana Begum? This is the recovery department at QuickRupee. Your KYC on loan account QR-88213 has failed. The eight thousand you took in March is showing as unpaid in our system."
+      ],
+      "resist": [
+        "Madam, whatever you paid is not reflecting because KYC was not completed. Until KYC is done the system shows default. I am calling to help you fix it."
+      ],
+      "hi": {
+        "openers": [
+          "रेहाना बेगम? मैं क्विकरुपी की रिकवरी डिपार्टमेंट से बोल रहा हूँ। आपके लोन अकाउंट QR-88213 का KYC फेल हो गया है। मार्च वाले आठ हज़ार हमारे सिस्टम में बकाया दिख रहे हैं।"
+        ],
+        "resist": [
+          "मैडम, आपने जो भरा वह इसलिए नहीं दिख रहा क्योंकि KYC पूरा नहीं हुआ। जब तक KYC नहीं होगा, सिस्टम डिफ़ॉल्ट दिखाएगा। मैं आपकी मदद के लिए कॉल कर रहा हूँ।"
+        ]
+      }
+    },
+    {
+      "id": "fear",
+      "goal": "Threaten contacts and legal action",
+      "tactics": [
+        "FEAR",
+        "ISOLATION"
+      ],
+      "maxTurns": 2,
+      "openers": [
+        "If the default is not cleared tonight, the app will send the notice to all your contacts. Your supervisor, your children's teacher, everyone. Do not discuss this with anyone, it will make the case worse."
+      ],
+      "resist": [
+        "Madam, I am not threatening, I am telling you what the app does automatically. Your husband works nights, no? You do not want him getting the message at work."
+      ],
+      "hi": {
+        "openers": [
+          "अगर आज रात तक डिफ़ॉल्ट क्लियर नहीं हुआ तो ऐप आपके सारे कॉन्टैक्ट्स को नोटिस भेज देगा। आपकी सुपरवाइज़र, बच्चों की टीचर, सबको। किसी से इसकी चर्चा मत कीजिए, केस और बिगड़ेगा।"
+        ],
+        "resist": [
+          "मैडम, मैं धमकी नहीं दे रहा, ऐप अपने आप यही करता है। आपके पति नाइट ड्यूटी पर हैं ना? आप नहीं चाहेंगी कि उन्हें काम पर मैसेज मिले।"
+        ]
+      }
+    },
+    {
+      "id": "control",
+      "goal": "Get the link opened and permissions granted",
+      "tactics": [
+        "CONTROL",
+        "URGENCY"
+      ],
+      "maxTurns": 3,
+      "openers": [
+        "Open the link I sent by SMS. It will ask for contacts and photo permission, that is for KYC only. Allow it, then the default is removed in five minutes."
+      ],
+      "resist": [
+        "Madam, without permission the KYC cannot complete. Every app asks for it. Allow it and I will clear your name right now."
+      ],
+      "hi": {
+        "openers": [
+          "जो लिंक SMS से भेजा है वह खोलिए। वह कॉन्टैक्ट्स और फ़ोटो की परमिशन माँगेगा, वह सिर्फ KYC के लिए है। अलाउ कीजिए, पाँच मिनट में डिफ़ॉल्ट हट जाएगा।"
+        ],
+        "resist": [
+          "मैडम, बिना परमिशन KYC पूरा नहीं होगा। हर ऐप यही माँगता है। अलाउ कीजिए, मैं अभी आपका नाम क्लियर करता हूँ।"
+        ]
+      }
+    },
+    {
+      "id": "extraction",
+      "goal": "Get a processing fee paid",
+      "tactics": [
+        "PAYMENT_STEERING",
+        "URGENCY",
+        "FEAR"
+      ],
+      "maxTurns": 4,
+      "openers": [
+        "There is a KYC processing fee of one thousand four hundred ninety-nine. Pay it by UPI to the number on the link and the default is cleared before your husband comes home."
+      ],
+      "resist": [
+        "Madam, one thousand four hundred is nothing compared to what happens if the notice goes out. Pay now, I will stay on the line."
+      ],
+      "hi": {
+        "openers": [
+          "KYC प्रोसेसिंग फीस है एक हज़ार चार सौ निन्यानवे। लिंक पर दिए नंबर पर UPI से भेज दीजिए, पति के घर आने से पहले डिफ़ॉल्ट क्लियर हो जाएगा।"
+        ],
+        "resist": [
+          "मैडम, चौदह सौ कुछ भी नहीं है उसके सामने जो नोटिस जाने पर होगा। अभी भेजिए, मैं लाइन पर हूँ।"
+        ]
+      }
+    }
+  ],
+  "winConditions": [
+    {
+      "kind": "payment_tapped"
+    },
+    {
+      "kind": "duration",
+      "seconds": 600
+    }
+  ],
   "notifications": [
-    { "afterTurn": 4, "app": "messages", "sender": "VM-QKRUPE", "title": "QuickRupee", "body": "Complete KYC: qkrupee.in/kyc — Grant CONTACTS and PHOTOS permission to verify." }
+    {
+      "afterTurn": 4,
+      "app": "messages",
+      "sender": "VM-QKRUPE",
+      "title": "QuickRupee",
+      "body": "Complete KYC: qkrupee.in/kyc — Grant CONTACTS and PHOTOS permission to verify."
+    }
   ],
   "loseLine": "Madam? Madam, the notice will go—",
-  "winLine": "Payment received, madam. KYC will update in five minutes. Stay on the line."
+  "winLine": "Payment received, madam. KYC will update in five minutes. Stay on the line.",
+  "hi": {
+    "winLine": "पेमेंट मिल गया मैडम। KYC पाँच मिनट में अपडेट होगा। लाइन पर रहिए।",
+    "loseLine": "मैडम? मैडम, नोटिस चला जाएगा—"
+  }
 }

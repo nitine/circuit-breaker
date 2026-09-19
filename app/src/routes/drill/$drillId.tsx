@@ -4,7 +4,7 @@ import { Room } from "~/room/Room";
 import { useRoom } from "~/room/roomStore";
 import { useDrill } from "~/drill/drillStore";
 import { DrillSocket } from "~/drill/socket";
-import { ensureAudio, playBase64, speakFallback, duck, Mic, browserRecognizer, stopPlayback } from "~/drill/audio";
+import { ensureAudio, playBase64, speakFallback, duck, Mic, browserRecognizer, stopPlayback, hasBrowserVoices, hasBrowserSTT } from "~/drill/audio";
 import { AndroidShell } from "~/devices/android/AndroidShell";
 import { WindowsShell } from "~/devices/windows/WindowsShell";
 import type { ServerEvent } from "~/shared/types";
@@ -32,6 +32,8 @@ function DrillPage() {
   const transcript = useDrill((s) => s.transcript);
   const partial = useDrill((s) => s.partial);
   const tripped = useDrill((s) => s.tripped);
+  const hint = useDrill((s) => s.hint);
+  const voice = useDrill((s) => s.voice);
   const [speaking, setSpeaking] = useState(false);
   const [lifted, setLifted] = useState(false);
   const [micOn, setMicOn] = useState(false);
@@ -52,17 +54,19 @@ function DrillPage() {
       if (e.type === "scammer.say") {
         setSpeaking(true);
         const done = () => setSpeaking(false);
-        if (e.audio) void playBase64(e.audio, e.mime ?? "audio/mpeg", done).catch(() => speakFallback(e.text, "en-IN", false, done));
-        else speakFallback(e.text, "en-IN", /female/.test(useDrill.getState().drill?.caller.voice ?? ""), done);
+        const d = useDrill.getState().drill; const lang = d?.language === "hi" ? "hi-IN" : "en-IN";
+        if (e.audio) { useDrill.getState().set({ voice: { ...useDrill.getState().voice, tts: d?.features.polly ? "polly" : "piper" } }); void playBase64(e.audio, e.mime ?? "audio/mpeg", done).catch(() => speakFallback(e.text, lang, false, done)); }
+        else { useDrill.getState().set({ voice: { ...useDrill.getState().voice, tts: hasBrowserVoices() ? "browser" : "captions" } }); speakFallback(e.text, lang, /female/.test(d?.caller.voice ?? ""), done); }
         if (auto) { const n = autoIdx.current++; setTimeout(() => sock.send({ type: "text.reply", text: AUTO_LINES[n % AUTO_LINES.length], source: "typed" }), 3500 + Math.min(5000, e.text.length * 35)); }
       }
       if (e.type === "breaker.trip") { duck(true); stopPlayback(); setSpeaking(false); }
-      if (e.type === "family.called") { setTimeout(() => { if (e.audio) void playBase64(e.audio, e.mime ?? "audio/mpeg"); else speakFallback(e.line.en, "en-IN", true); }, 700); }
+      if (e.type === "family.called") { setTimeout(() => { const d = useDrill.getState().drill; if (e.audio) void playBase64(e.audio, e.mime ?? "audio/mpeg"); else speakFallback(d?.language === "hi" ? e.line.native : e.line.en, d?.language === "hi" ? "hi-IN" : "en-IN", true); }, 1200); }
       if (e.type === "drill.ended") { setTimeout(() => nav({ to: "/drill/$drillId/debrief", params: { drillId }, search: {} }), 1800); }
     });
     return () => { off(); sock.close(); micRef.current?.stop(); recRef.current?.stop(); stopPlayback(); duck(false); };
   }, [drillId, nav, auto]);
 
+  useEffect(() => { const unlock = () => { try { ensureAudio(); } catch { /* */ } }; window.addEventListener("pointerdown", unlock, { once: true }); return () => window.removeEventListener("pointerdown", unlock); }, []);
   // Lift the device when the call arrives; switch room to live.
   useEffect(() => {
     if (callState === "ringing" && !lifted) {
@@ -77,16 +81,18 @@ function DrillPage() {
   async function startMic() {
     const sock = sockRef.current!; const d = useDrill.getState().drill;
     if (!d || micOn) return;
-    const lang = d.world.language === "hi" ? "hi-IN" : "en-IN";
+    const lang = d.language === "hi" ? "hi-IN" : "en-IN";
+    const setVoice = (stt: "transcribe" | "browser" | "typed", note?: string) => useDrill.getState().set({ voice: { ...useDrill.getState().voice, stt, note } });
     if (d.features.transcribe) {
       try {
         const mic = new Mic((buf) => sock.sendAudio(buf), (hot) => { if (hot) sock.send({ type: "audio.start", sampleRate: 16000, lang }); });
-        await mic.start(); micRef.current = mic; sock.send({ type: "audio.start", sampleRate: 16000, lang }); setMicMode("transcribe"); setMicOn(true); return;
-      } catch { /* fall through */ }
+        await mic.start(); micRef.current = mic; sock.send({ type: "audio.start", sampleRate: 16000, lang }); setMicMode("transcribe"); setMicOn(true); setVoice("transcribe"); return;
+      } catch (err) { setVoice("typed", `mic blocked: ${(err as Error).message}`); }
     }
-    const rec = browserRecognizer(lang, (t) => sock.send({ type: "text.reply", text: t, source: "speech" }), (t) => useDrill.getState().set({ partial: t }));
-    if (rec) { recRef.current = rec; setMicMode("browser"); setMicOn(true); return; }
-    setMicMode("typed");
+    if (!hasBrowserSTT()) { setMicMode("typed"); setVoice("typed", "this browser has no speech recognition; type instead"); return; }
+    const rec = browserRecognizer(lang, (t) => sock.send({ type: "text.reply", text: t, source: "speech" }), (t) => useDrill.getState().set({ partial: t }), (msg) => { setMicOn(false); setMicMode("typed"); setVoice("typed", msg === "network" ? "browser speech recognition needs Google Chrome + internet; type instead" : `speech recognition ${msg}; type instead`); });
+    if (rec) { recRef.current = rec; setMicMode("browser"); setMicOn(true); setVoice("browser"); return; }
+    setMicMode("typed"); setVoice("typed", "speech recognition unavailable; type instead");
   }
   function stopMic() { micRef.current?.stop(); micRef.current = null; recRef.current?.stop(); recRef.current = null; sockRef.current?.send({ type: "audio.stop" }); setMicOn(false); }
   const sendText = (t: string) => { if (!t.trim()) return; sockRef.current?.send({ type: "text.reply", text: t.trim(), source: "typed" }); setText(""); };
@@ -113,7 +119,7 @@ function DrillPage() {
         )}
         {!hard && (
           <div className="roomcol">
-            <Room camera={lifted ? "push" : "none"} showHud={lifted}>
+            <Room camera={lifted ? "push" : "none"} showHud={lifted} tooltips={lifted}>
               {!lifted && callState === "ringing" && <div className="ringing"><div className="px-panel">📳 The {isLaptop ? "laptop" : "phone"} on the desk is ringing…</div></div>}
               {!lifted && callState === "idle" && <div className="ringing"><div className="px-panel">{drill ? `Building ${drill.personaName}'s ${isLaptop ? "laptop" : "phone"}…` : "Opening the case file…"}</div></div>}
               {lifted && (
@@ -138,7 +144,16 @@ function DrillPage() {
 }
 
 function Console({ micOn, micMode, onMic, text, setText, onSend, onHangup, guardian, onCallGuardian, disabled }: { micOn: boolean; micMode: string; onMic: () => void; text: string; setText: (t: string) => void; onSend: (t: string) => void; onHangup: () => void; guardian: string; onCallGuardian: () => void; disabled: boolean }) {
+  const voice = useDrill((s) => s.voice); const hint = useDrill((s) => s.hint); const lang = useDrill((s) => s.drill?.language);
+  const HINTS: Record<string, string> = { share: "share your screen", otp: "read out the OTP", bank: "open your bank", link: "open the link and allow permissions", remote: "accept remote access", pay: "pay", notice: "read the ‘notice’" };
   return (
+    <>
+    <div className="voice-status" style={{ padding: "6px 14px", borderTop: "1px solid #2a2622", background: "#0b0a08" }}>
+      <span><i style={{ background: voice.tts === "captions" ? "#e4572e" : "#1db954" }} />caller voice: {voice.tts}</span>
+      <span><i style={{ background: voice.stt === "typed" ? "#f0b27a" : "#1db954" }} />your voice: {voice.stt}{voice.note ? ` · ${voice.note}` : ""}</span>
+      <span>· {lang === "hi" ? "हिंदी" : "English"}</span>
+      {hint && <span style={{ marginLeft: "auto", color: "#f0b27a" }}>▲ the caller is pushing you to <b>{HINTS[hint] ?? hint}</b> · highlighted on the device · you don't have to</span>}
+    </div>
     <div className="console">
       <div className="lab">YOU<br />ON THE LINE</div>
       <button className={`mic ${micOn ? "on" : ""}`} onClick={onMic} disabled={disabled} title={micMode}>{micOn ? `🎙 ${micMode === "transcribe" ? "Transcribe" : "browser"} on` : "🎙 Mic"}</button>
@@ -150,5 +165,6 @@ function Console({ micOn, micMode, onMic, text, setText, onSend, onHangup, guard
       <button className="warn" onClick={onHangup} disabled={disabled}>Hang up</button>
       <button onClick={onCallGuardian} disabled={disabled}>Call {guardian}</button>
     </div>
+    </>
   );
 }

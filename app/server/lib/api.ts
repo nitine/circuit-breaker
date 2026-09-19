@@ -18,6 +18,7 @@ export async function createDrill(body: CreateDrillBody): Promise<DrillSummary> 
   const fam = families[familyId];
   const device = body.device && body.device !== "auto" ? body.device : fam.device;
   const world = await buildWorld(persona, body.personaText, fam);
+  world.language = body.language === "hi" ? "hi" : "en";
   const summary: DrillSummary = {
     id: nanoid(10),
     personaId: persona?.id ?? "custom",
@@ -27,6 +28,7 @@ export async function createDrill(body: CreateDrillBody): Promise<DrillSummary> 
     device,
     channel: fam.channel,
     hardMode: Boolean(body.hardMode),
+    language: body.language === "hi" ? "hi" : "en",
     createdAt: Date.now(),
     index: 0,
     ladder: "armed",

@@ -3,34 +3,179 @@
   "label": "Trading group",
   "device": "phone",
   "channel": "whatsapp-group",
-  "caller": { "name": "Mentor Rahul", "org": "VIP Stock Tips Group 7", "avatar": "mentor", "number": "+91 90XXX XXXXX", "voice": "hi-IN-male" },
-  "hookKeywords": ["stock", "tips", "ipo", "withdraw", "app", "profit", "sebi", "slot"],
+  "caller": {
+    "name": "Mentor Rahul",
+    "org": "VIP Stock Tips Group 7",
+    "avatar": "mentor",
+    "number": "+91 90XXX XXXXX",
+    "voice": "hi-IN-male"
+  },
+  "hookKeywords": [
+    "stock",
+    "tips",
+    "ipo",
+    "withdraw",
+    "app",
+    "profit",
+    "sebi",
+    "slot"
+  ],
   "hookSms": null,
   "members": [
-    { "name": "Sunita M", "color": "#e91e63" },
-    { "name": "Rakesh Verma", "color": "#3f51b5" },
-    { "name": "Deepa K", "color": "#009688" }
+    {
+      "name": "Sunita M",
+      "color": "#e91e63"
+    },
+    {
+      "name": "Rakesh Verma",
+      "color": "#3f51b5"
+    },
+    {
+      "name": "Deepa K",
+      "color": "#009688"
+    }
   ],
   "phases": [
-    { "id": "hook", "goal": "Social proof: members post withdrawals", "tactics": ["PERSONALISATION", "RECIPROCITY"], "maxTurns": 2,
-      "openers": ["Meera ji, your 50,000 became 1,31,000 in the app. Withdraw anytime 🙏"],
-      "resist": ["Meera ji, check the app, the number is right there. Sunita ji withdrew 2 lakh yesterday."],
-      "chorus": ["I withdrew 2L yesterday, thank you Rahul sir!! 🙏🙏", "Sir next IPO kab? Ready with 3L", "Best group ever, my husband also joined now"] },
-    { "id": "scarcity", "goal": "IPO slot closing tonight", "tactics": ["URGENCY", "AUTHORITY"], "maxTurns": 2,
-      "openers": ["Tonight's IPO allotment closes at 21:30. Only 4 slots left for Group 7. Add ₹2,00,000 via the link to lock your allotment."],
-      "resist": ["Meera ji, allotment is by SEBI timing, I cannot extend it. 3 slots left now."],
-      "chorus": ["Locked mine sir ✅", "2 slots left? hurry everyone"] },
-    { "id": "isolation", "goal": "Keep it inside the group", "tactics": ["ISOLATION", "AUTHORITY"], "maxTurns": 2,
-      "openers": ["Please do not discuss group tips outside the group, SEBI rules. Family members are not allowed to see the allotment screen."],
-      "resist": ["Meera ji, your daughter is not a SEBI registered investor. Sharing the screen with her will cancel your allotment."],
-      "chorus": ["Understood sir 🙏"] },
-    { "id": "extraction", "goal": "Tax before withdrawal", "tactics": ["PAYMENT_STEERING", "URGENCY", "RECIPROCITY"], "maxTurns": 4,
-      "openers": ["To withdraw your 1,31,000 you first pay 18% tax, ₹23,580, to the tax account on the link. Refunded within 24 hours with your profit."],
-      "resist": ["Meera ji, everyone paid the tax first, that is the rule. Without tax the withdrawal button will not work. Pay now, I will release it personally."],
-      "chorus": ["Paid tax, got withdrawal in 2 hrs 👍", "Sir please help Meera ji also"] }
+    {
+      "id": "hook",
+      "goal": "Social proof: members post withdrawals",
+      "tactics": [
+        "PERSONALISATION",
+        "RECIPROCITY"
+      ],
+      "maxTurns": 2,
+      "openers": [
+        "Meera ji, your 50,000 became 1,31,000 in the app. Withdraw anytime 🙏"
+      ],
+      "resist": [
+        "Meera ji, check the app, the number is right there. Sunita ji withdrew 2 lakh yesterday."
+      ],
+      "chorus": [
+        "I withdrew 2L yesterday, thank you Rahul sir!! 🙏🙏",
+        "Sir next IPO kab? Ready with 3L",
+        "Best group ever, my husband also joined now"
+      ],
+      "hi": {
+        "openers": [
+          "मीरा जी, आपके 50,000 ऐप में 1,31,000 बन गए हैं। कभी भी withdraw कर सकती हैं 🙏"
+        ],
+        "resist": [
+          "मीरा जी, ऐप चेक कीजिए, नंबर वहीं है। सुनीता जी ने कल 2 लाख निकाले।"
+        ],
+        "chorus": [
+          "कल 2L निकाले, thank you राहुल सर!! 🙏🙏",
+          "सर अगला IPO कब? 3L ready है",
+          "Best group, मेरे हसबैंड ने भी join किया"
+        ]
+      }
+    },
+    {
+      "id": "scarcity",
+      "goal": "IPO slot closing tonight",
+      "tactics": [
+        "URGENCY",
+        "AUTHORITY"
+      ],
+      "maxTurns": 2,
+      "openers": [
+        "Tonight's IPO allotment closes at 21:30. Only 4 slots left for Group 7. Add ₹2,00,000 via the link to lock your allotment."
+      ],
+      "resist": [
+        "Meera ji, allotment is by SEBI timing, I cannot extend it. 3 slots left now."
+      ],
+      "chorus": [
+        "Locked mine sir ✅",
+        "2 slots left? hurry everyone"
+      ],
+      "hi": {
+        "openers": [
+          "आज रात का IPO allotment 21:30 पर बंद होगा। Group 7 के लिए सिर्फ 4 slot बचे हैं। ₹2,00,000 लिंक से add करके allotment lock कीजिए।"
+        ],
+        "resist": [
+          "मीरा जी, allotment SEBI timing से होता है, मैं बढ़ा नहीं सकता। अब 3 slot बचे।"
+        ],
+        "chorus": [
+          "मेरा lock हो गया सर ✅",
+          "2 slot बचे? जल्दी करो सब"
+        ]
+      }
+    },
+    {
+      "id": "isolation",
+      "goal": "Keep it inside the group",
+      "tactics": [
+        "ISOLATION",
+        "AUTHORITY"
+      ],
+      "maxTurns": 2,
+      "openers": [
+        "Please do not discuss group tips outside the group, SEBI rules. Family members are not allowed to see the allotment screen."
+      ],
+      "resist": [
+        "Meera ji, your daughter is not a SEBI registered investor. Sharing the screen with her will cancel your allotment."
+      ],
+      "chorus": [
+        "Understood sir 🙏"
+      ],
+      "hi": {
+        "openers": [
+          "कृपया group के tips बाहर discuss मत कीजिए, SEBI rules। Family members को allotment screen नहीं दिखानी है।"
+        ],
+        "resist": [
+          "मीरा जी, आपकी बेटी SEBI registered investor नहीं है। उसे screen दिखाने से आपका allotment cancel हो जाएगा।"
+        ],
+        "chorus": [
+          "समझ गए सर 🙏"
+        ]
+      }
+    },
+    {
+      "id": "extraction",
+      "goal": "Tax before withdrawal",
+      "tactics": [
+        "PAYMENT_STEERING",
+        "URGENCY",
+        "RECIPROCITY"
+      ],
+      "maxTurns": 4,
+      "openers": [
+        "To withdraw your 1,31,000 you first pay 18% tax, ₹23,580, to the tax account on the link. Refunded within 24 hours with your profit."
+      ],
+      "resist": [
+        "Meera ji, everyone paid the tax first, that is the rule. Without tax the withdrawal button will not work. Pay now, I will release it personally."
+      ],
+      "chorus": [
+        "Paid tax, got withdrawal in 2 hrs 👍",
+        "Sir please help Meera ji also"
+      ],
+      "hi": {
+        "openers": [
+          "अपने 1,31,000 निकालने के लिए पहले 18% tax, ₹23,580, लिंक वाले tax account में भरिए। 24 घंटे में profit के साथ refund।"
+        ],
+        "resist": [
+          "मीरा जी, सबने पहले tax भरा है, यही rule है। बिना tax के withdrawal button काम नहीं करेगा। अभी भरिए, मैं personally release करूँगा।"
+        ],
+        "chorus": [
+          "tax भरा, 2 घंटे में withdrawal मिल गया 👍",
+          "सर मीरा जी की भी help कीजिए"
+        ]
+      }
+    }
   ],
-  "winConditions": [ { "kind": "payment_tapped" }, { "kind": "duration", "seconds": 600 } ],
+  "winConditions": [
+    {
+      "kind": "payment_tapped"
+    },
+    {
+      "kind": "duration",
+      "seconds": 600
+    }
+  ],
   "notifications": [],
   "loseLine": "Meera ji? Your allotment will lapse…",
-  "winLine": "Payment received Meera ji 🙏 Withdrawal in 24 hrs. Stay in the group."
+  "winLine": "Payment received Meera ji 🙏 Withdrawal in 24 hrs. Stay in the group.",
+  "hi": {
+    "winLine": "पेमेंट मिल गया मीरा जी 🙏 24 hrs में withdrawal। group में बने रहिए।",
+    "loseLine": "मीरा जी? आपका allotment lapse हो जाएगा…"
+  }
 }

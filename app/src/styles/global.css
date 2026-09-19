@@ -66,3 +66,30 @@ button { font-family: inherit; cursor: pointer; }
 @keyframes blink { 50% { opacity: .3 } }
 
 @media (prefers-reduced-motion: reduce) { .room-cam { transition: none } .device-stage .device { animation: none !important } }
+
+/* Hints: the control the caller is pushing you toward */
+.hint-target { position: relative; }
+.hint-target::before { content: ""; position: absolute; inset: -8px; border-radius: 999px; border: 3px solid #f0b27a; box-shadow: 0 0 0 0 #f0b27a88; animation: hintPulse 1.4s infinite; pointer-events: none; z-index: 9; }
+.hint-target.sq::before { border-radius: 10px; }
+@keyframes hintPulse { 0% { box-shadow: 0 0 0 0 #f0b27a99; opacity: 1 } 70% { box-shadow: 0 0 0 14px #f0b27a00; opacity: 1 } 100% { box-shadow: 0 0 0 0 #f0b27a00; opacity: .8 } }
+.hint-note { position: absolute; z-index: 11; background: #1a1410; color: #fff; font-family: var(--font-ui); font-size: 12px; line-height: 1.35; padding: 8px 10px; border-radius: 8px; max-width: 220px; box-shadow: 0 6px 20px #0006; pointer-events: none; }
+.hint-note::after { content: ""; position: absolute; width: 10px; height: 10px; background: #1a1410; transform: rotate(45deg); }
+.hint-note.above { transform: translate(-50%, -100%); }
+.hint-note.above::after { left: calc(50% - 5px); bottom: -5px; }
+.hint-note.below { transform: translate(-50%, 0); }
+.hint-note.below::after { left: calc(50% - 5px); top: -5px; }
+.hint-note b { color: var(--amber); }
+.shake { animation: shake .5s infinite; }
+@keyframes shake { 0%,100% { transform: translate(0,0) } 20% { transform: translate(-2px,1px) rotate(-.4deg) } 40% { transform: translate(2px,-1px) rotate(.4deg) } 60% { transform: translate(-2px,0) } 80% { transform: translate(2px,1px) } }
+/* Room tooltips in live mode */
+.room-tip { position: absolute; z-index: 12; background: #fffdf7; color: var(--ink); border: 2px solid var(--ink); border-radius: 8px; padding: 8px 10px; font-family: var(--font-ui); font-size: 12px; max-width: 260px; box-shadow: 3px 3px 0 #00000055; pointer-events: none; transform: translate(-50%, -100%); }
+.room-tip b { display: block; font-family: var(--font-pixel); font-size: 10px; letter-spacing: 1px; margin-bottom: 4px; color: #6b5636; }
+.room-tip ul { margin: 4px 0 0; padding-left: 16px; }
+/* Windows remote-control cursor + cmd */
+.fake-cursor { position: absolute; z-index: 70; width: 16px; height: 22px; pointer-events: none; transition: left .9s cubic-bezier(.4,0,.2,1), top .9s cubic-bezier(.4,0,.2,1); filter: drop-shadow(1px 1px 1px #0008); }
+.cmd { font-family: "Cascadia Mono", "Consolas", monospace; background: #0c0c0c; color: #ccc; font-size: 12px; padding: 8px; height: 100%; white-space: pre-wrap; overflow: hidden; }
+.pip-call { position: absolute; top: 40px; right: 10px; z-index: 25; background: #0b141a; color: #fff; border-radius: 14px; padding: 8px 10px; display: flex; gap: 8px; align-items: center; box-shadow: 0 8px 20px #0006; cursor: pointer; border: 1px solid #00a88455; }
+.pip-call .dot { width: 8px; height: 8px; border-radius: 50%; background: #00a884; animation: blink 1.2s infinite; }
+.pip-call small { display: block; font-size: 10px; opacity: .7; }
+.voice-status { display: flex; gap: 10px; align-items: center; font-size: 11px; color: var(--muted); }
+.voice-status i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 4px; }

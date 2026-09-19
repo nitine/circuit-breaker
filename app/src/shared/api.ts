@@ -16,5 +16,5 @@ export interface Catalog {
   families: { id: string; label: string; device: "phone" | "laptop"; channel: string }[];
   tactics: Record<string, { delta: number; label: string; hint: string }>;
   mode: "aws" | "local";
-  features: { transcribe: boolean; polly: boolean; bedrock: boolean };
+  features: { transcribe: boolean; polly: boolean; bedrock: boolean; piper?: boolean };
 }

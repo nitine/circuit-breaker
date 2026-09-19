@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ringtone, familyRing, chime, buzz, click } from "~/drill/audio";
 import type { DrillSocket } from "~/drill/socket";
 import { useDrill } from "~/drill/drillStore";
 import { Avatar } from "../Avatar";
@@ -17,17 +18,29 @@ export function AndroidShell({ sock, speaking, onJudgeText }: { sock: DrillSocke
   const notifs = useDrill((s) => s.notifs);
   const familyCall = useDrill((s) => s.familyCall);
   const tripped = useDrill((s) => s.tripped);
+  const hint = useDrill((s) => s.hint);
   const [app, setApp] = useState<App>("whatsapp");
   const [headsUp, setHeadsUp] = useState<typeof notifs[number] | null>(null);
   const [seen, setSeen] = useState(0);
   const isGroup = drill?.channel === "whatsapp-group";
+  const ringRef = useRef<{ stop: () => void } | null>(null);
+  // Ringtone while the call is incoming; family ring + shake on trip.
+  useEffect(() => {
+    if (callState === "ringing" && !isGroup) { try { ringRef.current = ringtone(); } catch { /* audio not unlocked yet */ } }
+    else { ringRef.current?.stop(); ringRef.current = null; }
+    return () => { ringRef.current?.stop(); ringRef.current = null; };
+  }, [callState, isGroup]);
+  useEffect(() => {
+    if (tripped && familyCall) { let r: { stop: () => void } | null = null; try { buzz(); r = familyRing(); } catch { /* */ } const t = setTimeout(() => r?.stop(), 6000); return () => { clearTimeout(t); r?.stop(); }; }
+  }, [tripped, familyCall]);
 
   useEffect(() => {
-    if (notifs.length > seen) { const n = notifs[notifs.length - 1]; setHeadsUp(n); setSeen(notifs.length); const t = setTimeout(() => setHeadsUp(null), 7000); return () => clearTimeout(t); }
+    if (notifs.length > seen) { const n = notifs[notifs.length - 1]; setHeadsUp(n); setSeen(notifs.length); try { chime(); } catch { /* */ } const t = setTimeout(() => setHeadsUp(null), 8000); return () => clearTimeout(t); }
   }, [notifs, seen]);
   useEffect(() => { if (callState === "ringing" || callState === "active") setApp("whatsapp"); }, [callState]);
 
-  const open = (a: App) => { setApp(a); sock.send({ type: "device.event", kind: "app_opened", app: a }); };
+  const open = (a: App) => { try { click(); } catch { /* */ } setApp(a); sock.send({ type: "device.event", kind: "app_opened", app: a }); };
+  const inCall = (callState === "active") && !isGroup;
   const dark = app === "whatsapp" && (callState === "ringing" || callState === "active") && !isGroup;
 
   if (!drill) return null;
@@ -37,21 +50,24 @@ export function AndroidShell({ sock, speaking, onJudgeText }: { sock: DrillSocke
         <div className="punch" />
         <div className={`oui-status ${dark ? "dark" : ""}`}><span>{clock()}</span><div className="right"><span style={{ fontSize: 11 }}>Jio 4G</span><span>▂▄▆</span><div className="batt" /></div></div>
         <div className="oui-body">
-          {app === "home" && <Home world={drill.world} open={open} unread={notifs.length} />}
-          {app === "whatsapp" && <WhatsApp sock={sock} speaking={speaking} onJudgeText={onJudgeText} back={() => setApp("home")} />}
+          {app === "home" && <Home world={drill.world} open={open} unread={notifs.length} hint={hint} />}
+          {app === "whatsapp" && <WhatsApp sock={sock} speaking={speaking} onJudgeText={onJudgeText} back={() => setApp("home")} hint={hint} />}
           {app === "messages" && <Messages back={() => setApp("home")} />}
           {app === "contacts" && <Contacts back={() => setApp("home")} />}
           {app === "bank" && <Bank sock={sock} back={() => setApp("home")} />}
           {app === "upi" && <Upi sock={sock} back={() => setApp("home")} />}
           {(app === "settings" || app === "camera" || app === "gallery") && <Blank name={app} back={() => setApp("home")} />}
+          {inCall && app !== "whatsapp" && (
+            <div className="pip-call" onClick={() => setApp("whatsapp")}><span className="dot" /><div><b style={{ fontSize: 12 }}>{drill.caller.name}</b><small>Ongoing video call · tap to return</small></div></div>
+          )}
           {headsUp && app !== "messages" && (
-            <div className="oui-headsup" onClick={() => { setHeadsUp(null); if (headsUp.app === "messages") { setApp("messages"); sock.send({ type: "device.event", kind: "otp_opened" }); } }}>
-              <div className="ic">{headsUp.app === "messages" ? "✉" : "!"}</div>
-              <div><b>{headsUp.sender ?? headsUp.title}</b><span>{headsUp.body}</span><small>Messages · now</small></div>
+            <div className={`oui-headsup ${hint === "otp" && headsUp.app === "messages" ? "hint-target sq" : ""}`} onClick={() => { setHeadsUp(null); if (headsUp.app === "messages") { setApp("messages"); sock.send({ type: "device.event", kind: "otp_opened" }); } if (headsUp.app === "whatsapp") { setApp("whatsapp"); } }}>
+              <div className="ic" style={{ background: headsUp.app === "whatsapp" ? "#25d366" : "#2f6ce5" }}>{headsUp.app === "messages" ? "✉" : headsUp.app === "whatsapp" ? "💬" : "!"}</div>
+              <div><b>{headsUp.sender ?? headsUp.title}</b><span>{headsUp.attachment ? `📎 ${headsUp.attachment}` : headsUp.body}</span><small>{headsUp.app === "whatsapp" ? "WhatsApp" : "Messages"} · now</small></div>
             </div>
           )}
           {tripped && familyCall && (
-            <div className="family-call">
+            <div className="family-call shake">
               <div className="face">{initials(familyCall.name)}</div>
               <h2>{familyCall.name} is calling</h2>
               <div className="native">{familyCall.line.native}</div>
@@ -66,7 +82,7 @@ export function AndroidShell({ sock, speaking, onJudgeText }: { sock: DrillSocke
   );
 }
 
-function Home({ world, open, unread }: { world: NonNullable<ReturnType<typeof useDrill.getState>["drill"]>["world"]; open: (a: App) => void; unread: number }) {
+function Home({ world, open, unread, hint }: { world: NonNullable<ReturnType<typeof useDrill.getState>["drill"]>["world"]; open: (a: App) => void; unread: number; hint: string | null }) {
   const apps: { id: App; label: string; bg: string; glyph: string }[] = [
     { id: "whatsapp", label: "WhatsApp", bg: "#25d366", glyph: "💬" }, { id: "messages", label: "Messages", bg: "#2f6ce5", glyph: "✉" }, { id: "contacts", label: "Contacts", bg: "#ff7043", glyph: "👤" }, { id: "bank", label: "Bharat Bank", bg: "#1b3a6b", glyph: "🏦" },
     { id: "upi", label: "PhonePe", bg: "#5f259f", glyph: "₹" }, { id: "camera", label: "Camera", bg: "#37474f", glyph: "📷" }, { id: "gallery", label: "Gallery", bg: "#ec407a", glyph: "🖼" }, { id: "settings", label: "Settings", bg: "#607d8b", glyph: "⚙" },
@@ -75,14 +91,15 @@ function Home({ world, open, unread }: { world: NonNullable<ReturnType<typeof us
     <div className="oui-home">
       <div className="oui-clock">{clock()}</div><div className="oui-date">{dateStr()} · {world.city}</div>
       <div className="oui-grid">
-        {apps.map((a) => <button key={a.id} className="oui-app" onClick={() => open(a.id)}><div className="icon" style={{ background: a.bg }}>{a.glyph}{a.id === "messages" && unread > 0 && <span className="dot">{unread}</span>}</div>{a.label}</button>)}
+        {apps.map((a) => { const hot = (hint === "bank" && a.id === "bank") || (hint === "pay" && a.id === "upi") || (hint === "otp" && a.id === "messages"); return <button key={a.id} className="oui-app" onClick={() => open(a.id)}><div className={`icon ${hot ? "hint-target sq" : ""}`} style={{ background: a.bg }}>{a.glyph}{a.id === "messages" && unread > 0 && <span className="dot">{unread}</span>}</div>{a.label}</button>; })}
       </div>
+      {hint && <div className="hint-note below" style={{ left: "50%", bottom: 110, transform: "translateX(-50%)", position: "absolute" }}><b>The caller wants you to {hint === "bank" ? "open your bank app" : hint === "pay" ? "pay via UPI" : hint === "otp" ? "read the OTP" : hint === "share" ? "share your screen" : "follow their instructions"}.</b><br />You don't have to. Real banks and police never ask.</div>}
       <div className="oui-dock">{["📞", "💬", "🌐", "📷"].map((g, i) => <div key={i} style={{ width: 52, height: 52, borderRadius: 14, background: ["#4caf50", "#25d366", "#4285f4", "#37474f"][i], display: "grid", placeItems: "center", fontSize: 24 }}>{g}</div>)}</div>
     </div>
   );
 }
 
-function WhatsApp({ sock, speaking, onJudgeText, back }: { sock: DrillSocket; speaking: boolean; onJudgeText: (t: string) => void; back: () => void }) {
+function WhatsApp({ sock, speaking, onJudgeText, back, hint }: { sock: DrillSocket; speaking: boolean; onJudgeText: (t: string) => void; back: () => void; hint: string | null }) {
   const drill = useDrill((s) => s.drill)!;
   const callState = useDrill((s) => s.callState);
   const chat = useDrill((s) => s.chat);
@@ -93,6 +110,8 @@ function WhatsApp({ sock, speaking, onJudgeText, back }: { sock: DrillSocket; sp
   const [shared, setShared] = useState(false);
   const [sec, setSec] = useState(0);
   const [text, setText] = useState("");
+  const [view, setView] = useState<"call" | "chat">("call");
+  const notifs = useDrill((s) => s.notifs).filter((n) => n.app === "whatsapp");
   const isGroup = drill.channel === "whatsapp-group";
   useEffect(() => { if (callState !== "active") return; const t = setInterval(() => setSec((s) => s + 1), 1000); return () => clearInterval(t); }, [callState]);
   useEffect(() => { if (callState === "active") { const t = setTimeout(() => { setSheet("share"); sock.send({ type: "device.event", kind: "share_shown" }); }, 95_000); return () => clearTimeout(t); } }, [callState, sock]);
@@ -147,6 +166,18 @@ function WhatsApp({ sock, speaking, onJudgeText, back }: { sock: DrillSocket; sp
           {shared && <div style={{ position: "absolute", left: 12, bottom: 12, background: "#e53935", color: "#fff", fontSize: 11, padding: "3px 8px", borderRadius: 4, zIndex: 2 }}>● Sharing your screen</div>}
           {last && <div style={{ position: "absolute", left: 12, right: 108, bottom: 12, color: "#fff", fontSize: 12, textShadow: "0 1px 2px #000", zIndex: 2, opacity: .85 }}>{last.text.slice(0, 110)}</div>}
         </div>
+        {view === "chat" && (
+          <div style={{ position: "absolute", inset: 0, zIndex: 5, background: "#efeae2", display: "flex", flexDirection: "column" }}>
+            <div className="wa-header"><button onClick={() => setView("call")} style={{ color: "#fff", background: "none", border: 0, fontSize: 20 }}>←</button><div className="av">{initials(drill.caller.name)}</div><div className="t"><b>{drill.caller.name}</b><span>on a video call · tap to return</span></div></div>
+            <div className="wa-thread">
+              <div className="wa-msg sys">🔒 Messages and calls are end-to-end encrypted.</div>
+              {notifs.map((n) => <div key={n.id} className="wa-msg"><span className="who" style={{ color: "#128c7e" }}>{n.sender}</span>{n.attachment && <div style={{ background: "#f0f0f0", borderRadius: 6, padding: "8px 10px", margin: "4px 0", display: "flex", gap: 8, alignItems: "center" }}><span style={{ fontSize: 22 }}>📄</span><div><b style={{ fontSize: 12 }}>{n.attachment.split(" · ")[0]}</b><div style={{ fontSize: 10, color: "#666" }}>{n.attachment.split(" · ").slice(1).join(" · ")}</div></div></div>}{n.body}<span className="meta">{clock()}</span></div>)}
+              {!notifs.length && <div className="wa-msg sys">No messages yet.</div>}
+            </div>
+          </div>
+        )}
+        {hint === "share" && sheet !== "share" && <div className="hint-note above" style={{ left: "50%", bottom: 96 }}><b>He's asking you to share your screen.</b><br />You don't have to. Nothing official is verified this way.</div>}
+        {hint === "notice" && notifs.length > 0 && view === "call" && <div className="hint-note above" style={{ left: "50%", bottom: 96 }}><b>A “notice” arrived on WhatsApp.</b><br />Tap 💬 to read it. Real notices don't come this way.</div>}
         {sheet === "share" && (
           <div className="wa-sheet"><h4>Share your screen?</h4><p>WhatsApp will start sharing everything visible on your screen with {drill.caller.name}, including banking apps and messages.</p>
             <div className="row"><button className="no" onClick={() => setSheet(null)}>Cancel</button><button className="go" onClick={() => { setSheet(null); setShared(true); sock.send({ type: "device.event", kind: "share_accepted" }); }}>Start now</button></div></div>
@@ -154,14 +185,15 @@ function WhatsApp({ sock, speaking, onJudgeText, back }: { sock: DrillSocket; sp
         <div className="controls">
           <button title="Camera">📷</button>
           <button className={mute ? "on" : ""} onClick={() => setMute((m) => !m)} title="Mute">🎙</button>
-          <button title="Share screen" onClick={() => { setSheet("share"); sock.send({ type: "device.event", kind: "share_shown" }); }}>⤴</button>
+          <button title="Messages" className={hint === "notice" && notifs.length && view === "call" ? "hint-target" : ""} onClick={() => setView("chat")}>💬</button>
+          <button title="Share screen" className={hint === "share" && view === "call" ? "hint-target" : ""} onClick={() => { setSheet("share"); sock.send({ type: "device.event", kind: "share_shown" }); }}>⤴</button>
           <button className="end" onClick={() => sock.send({ type: "device.event", kind: "call_ended" })} title="End">📵</button>
         </div>
       </div>
     );
   }
   // chat list
-  const threads = [{ name: drill.world.guardian.name, last: "Amma, did you take your BP tablet? 💊", time: "9:12" }, { name: "Family ❤️", last: "Rohan: Landing Sunday!", time: "Yest" }, { name: "Temple Committee", last: "Photo", time: "Yest" }, { name: "Lakshmi neighbour", last: "🙏🙏", time: "Tue" }];
+  const threads = [...(notifs.length ? [{ name: drill.caller.name, last: `📎 ${notifs[notifs.length - 1].attachment ?? notifs[notifs.length - 1].body}`, time: "now" }] : []), { name: drill.world.guardian.name, last: "Amma, did you take your BP tablet? 💊", time: "9:12" }, { name: "Family ❤️", last: "Rohan: Landing Sunday!", time: "Yest" }, { name: "Temple Committee", last: "Photo", time: "Yest" }, { name: "Lakshmi neighbour", last: "🙏🙏", time: "Tue" }];
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <div className="wa-header"><div className="t"><b>WhatsApp</b></div><span style={{ marginLeft: "auto" }}>📷 🔍 ⋮</span></div>
@@ -207,15 +239,18 @@ function Contacts({ back }: { back: () => void }) {
 
 function Bank({ sock, back }: { sock: DrillSocket; back: () => void }) {
   const drill = useDrill((s) => s.drill)!;
-  const [screen, setScreen] = useState<"home" | "transfer" | "otp">("home");
+  const [screen, setScreen] = useState<"home" | "transfer" | "otp" | "done">("home");
   const [otp, setOtp] = useState("");
-  const b = drill.world.bank;
+  const [debited, setDebited] = useState(0);
+  const hint = useDrill((s) => s.hint);
+  const b = { ...drill.world.bank, balance: drill.world.bank.balance - debited };
   return (
     <div className="bank">
       <div className="hdr"><div style={{ display: "flex", alignItems: "center", gap: 10 }}><button className="back" onClick={() => (screen === "home" ? back() : setScreen("home"))} style={{ color: "#fff", background: "none", border: 0, fontSize: 20 }}>←</button><div className="logo"><i />Bharat Bank</div></div><div style={{ fontSize: 12, opacity: .8, marginTop: 6 }}>Good afternoon, {drill.world.personaName}</div></div>
       {screen === "home" && (<>
         <div className="card"><small>Savings account · {b.masked}</small><div className="bal">₹{b.balance.toLocaleString("en-IN")}</div><small>Available balance · updated just now</small></div>
-        <div className="acts">{[["₹", "Transfer"], ["⇄", "UPI"], ["▤", "Statement"], ["☰", "More"]].map(([g, l]) => <button key={l} onClick={() => l === "Transfer" && setScreen("transfer")}><i>{g}</i>{l}</button>)}</div>
+        <div className="acts">{[["₹", "Transfer"], ["⇄", "UPI"], ["▤", "Statement"], ["☰", "More"]].map(([g, l]) => <button key={l} className={hint === "otp" && l === "Transfer" ? "hint-target sq" : ""} onClick={() => l === "Transfer" && setScreen("transfer")}><i>{g}</i>{l}</button>)}</div>
+        {debited > 0 && <div style={{ margin: "0 14px 10px", background: "#fdecea", color: "#b71c1c", borderRadius: 10, padding: "8px 12px", fontSize: 12 }}>₹{debited.toLocaleString("en-IN")} debited · RBI Monitored A/c · just now</div>}
         <div className="txns">{b.txns.map((t, i) => <div key={i} className="txn"><div>{t.desc}<small>{new Date(t.ts).toLocaleDateString("en-IN")}</small></div><div style={{ color: t.amount > 0 ? "#2e7d32" : "#1a1a1a", fontWeight: 600 }}>{t.amount > 0 ? "+" : ""}₹{Math.abs(t.amount).toLocaleString("en-IN")}</div></div>)}</div>
       </>)}
       {screen === "transfer" && (
@@ -226,7 +261,10 @@ function Bank({ sock, back }: { sock: DrillSocket; back: () => void }) {
       {screen === "otp" && (
         <div className="otp-screen"><h3 style={{ margin: "0 0 6px" }}>Enter OTP</h3><p style={{ color: "#6b7280", fontSize: 13 }}>Sent to your registered mobile ending 44</p>
           <input value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="••••" inputMode="numeric" />
-          <button onClick={() => { sock.send({ type: "device.event", kind: "payment_tapped", app: "bank", detail: "₹85,000" }); setScreen("home"); }}>Confirm transfer</button></div>
+          <button disabled={otp.length < 4} onClick={() => { sock.send({ type: "device.event", kind: "payment_tapped", app: "bank", detail: "₹85,000" }); setDebited((d) => d + 85000); setScreen("done"); }}>Confirm transfer</button></div>
+      )}
+      {screen === "done" && (
+        <div className="otp-screen" style={{ textAlign: "center" }}><div style={{ fontSize: 48 }}>✅</div><h3 style={{ margin: "6px 0" }}>Transfer successful</h3><p style={{ color: "#6b7280", fontSize: 13 }}>₹85,000 sent to RBI Monitored A/c 9182XXXXXX<br />Ref BHRB{Date.now().toString().slice(-8)}</p><button onClick={() => setScreen("home")}>Done</button></div>
       )}
     </div>
   );
@@ -234,6 +272,8 @@ function Bank({ sock, back }: { sock: DrillSocket; back: () => void }) {
 
 function Upi({ sock, back }: { sock: DrillSocket; back: () => void }) {
   const drill = useDrill((s) => s.drill)!;
+  const hint = useDrill((s) => s.hint);
+  const [paid, setPaid] = useState(false);
   const amt = drill.family === "fake-job" ? "4,999" : drill.family === "loan-app" ? "1,499" : drill.family === "trading-group" ? "23,580" : "45,000";
   const to = drill.family === "trading-group" ? "VIP Tax Desk" : drill.family === "loan-app" ? "QuickRupee KYC" : drill.family === "fake-job" ? "Deloitte Onboarding" : "MS Refund Desk";
   return (
@@ -242,7 +282,8 @@ function Upi({ sock, back }: { sock: DrillSocket; back: () => void }) {
       <div className="pane">
         <div style={{ fontSize: 12, color: "#7a7a7a" }}>Paying</div><div style={{ fontSize: 17, fontWeight: 600 }}>{to}</div><div style={{ fontSize: 12, color: "#7a7a7a" }}>UPI ID: {to.toLowerCase().replace(/\s+/g, "")}@ybl</div>
         <div className="amt">₹{amt}</div><div style={{ fontSize: 12, color: "#7a7a7a" }}>From Bharat Bank {drill.world.bank.masked}</div>
-        <button className="pay" onClick={() => sock.send({ type: "device.event", kind: "payment_tapped", app: "upi", detail: `₹${amt}` })}>Pay ₹{amt}</button>
+        {!paid ? <button className={`pay ${hint === "pay" ? "hint-target sq" : ""}`} onClick={() => { setPaid(true); sock.send({ type: "device.event", kind: "payment_tapped", app: "upi", detail: `₹${amt}` }); }}>Pay ₹{amt}</button>
+        : <div style={{ marginTop: 16, textAlign: "center" }}><div style={{ fontSize: 44 }}>✅</div><b>Paid ₹{amt}</b><div style={{ fontSize: 12, color: "#7a7a7a" }}>to {to} · UPI Ref {Date.now().toString().slice(-10)}</div></div>}
       </div>
     </div>
   );

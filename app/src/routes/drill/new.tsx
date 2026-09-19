@@ -5,7 +5,7 @@ import { Room } from "~/room/Room";
 import { useRoom } from "~/room/roomStore";
 import { Topbar } from "~/components/Topbar";
 import { api } from "~/shared/api";
-import type { DeviceKind } from "~/shared/types";
+import type { DeviceKind, Lang } from "~/shared/types";
 import pagesCss from "~/styles/pages.css?url";
 
 export const Route = createFileRoute("/drill/new")({
@@ -21,10 +21,11 @@ function Picker() {
   const [family, setFamily] = useState<string>("digital-arrest");
   const [device, setDevice] = useState<DeviceKind | "auto">("auto");
   const [hard, setHard] = useState(false);
+  const [lang, setLang] = useState<Lang>("en");
   useEffect(() => { const r = useRoom.getState(); r.reset(); r.setMode("dimmed"); }, []);
   useEffect(() => { const p = cat.data?.personas.find((x) => x.id === personaId); if (p) setFamily(p.defaultFamily); }, [personaId, cat.data]);
   const create = useMutation({
-    mutationFn: () => api.createDrill({ personaId: personaId === "custom" ? undefined : personaId, personaText: personaId === "custom" ? custom : undefined, family: family as never, device, hardMode: hard }),
+    mutationFn: () => api.createDrill({ personaId: personaId === "custom" ? undefined : personaId, personaText: personaId === "custom" ? custom : undefined, family: family as never, device, hardMode: hard, language: lang }),
     onSuccess: (d) => nav({ to: "/drill/$drillId", params: { drillId: d.id }, search: {} }),
   });
   const famDevice = useMemo(() => cat.data?.families.find((f) => f.id === family)?.device, [cat.data, family]);
@@ -65,7 +66,17 @@ function Picker() {
           </div>
         </div>
         <div className="sec">
-          <span className="px-label">3 · Your device</span>
+          <span className="px-label">3 · Language of the call</span>
+          <div className="chips">
+            <button className={`px-chip ${lang === "en" ? "on" : ""}`} onClick={() => setLang("en")}>English</button>
+            <button className={`px-chip ${lang === "hi" ? "on" : ""}`} onClick={() => setLang("hi")}>हिंदी · Hindi</button>
+            <span style={{ fontFamily: "var(--font-type)", fontSize: 12, color: "#1f5fbf", alignSelf: "center" }}>
+              {lang === "hi" ? (cat.data?.features.polly ? "Caller speaks Hindi via Polly; Transcribe listens in hi-IN." : "Hindi lines for the phone cases; voice needs Polly or a Hindi browser voice, else captions.") : (cat.data?.features.polly ? "Polly voice, Transcribe listens in en-IN." : cat.data?.features.piper ? "Local neural voice (Piper). Browser speech recognition listens." : "No voice engine found: captions only until AWS keys or Piper are set.")}
+            </span>
+          </div>
+        </div>
+        <div className="sec">
+          <span className="px-label">4 · Your device</span>
           <div className="devices">
             {([["auto", "Follows the case", `${family === "surprise" ? "Decided when the drill starts" : `${famDevice === "laptop" ? "Windows laptop" : "Android phone"} for this case`}`], ["phone", "Android phone", "One UI · WhatsApp, Messages, Bank, PhonePe"], ["laptop", "Windows laptop", "Windows 11 · Chrome, Gmail, Meet, AnyDesk"]] as const).map(([id, b, s]) => (
               <button key={id} className={`device ${device === id ? "on" : ""}`} onClick={() => setDevice(id)}><span style={{ fontSize: 22 }}>{id === "laptop" ? "💻" : id === "phone" ? "📱" : "🎲"}</span><div><b>{b}</b><span>{s}</span></div></button>

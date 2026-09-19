@@ -1,4 +1,4 @@
-import type { ClientEvent, ServerEvent, SignalKind, Tactic, Ending } from "~/shared/types";
+import type { ClientEvent, ServerEvent, SignalKind, Tactic, Ending, UiHint } from "~/shared/types";
 import type { DrillRecord } from "./store";
 import { touch } from "./store";
 import { families, ontology } from "./corpus";
@@ -32,14 +32,22 @@ export class DrillSession {
 
   constructor(readonly rec: DrillRecord, private send: Send) {
     const fam = families[rec.summary.family];
-    this.red = new RedAgent(fam, rec.summary.world);
+    this.red = new RedAgent(fam, rec.summary.world, rec.summary.language);
   }
 
   private emit(e: WithoutSeq<ServerEvent>) { this.send({ ...(e as ServerEvent), seq: ++this.seq }); }
   private later(ms: number, fn: () => void) { const t = setTimeout(fn, ms); this.timers.push(t); return t; }
   private get fam() { return families[this.rec.summary.family]; }
   private get d() { return this.rec.summary; }
-  private get lang(): "en" | "hi" | "kn" { return this.d.world.language === "kn" ? "en" : this.d.world.language; }
+  private get lang(): "en" | "hi" | "kn" { return this.d.language === "hi" ? "hi" : "en"; }
+  private hintFor(phaseId: string): UiHint {
+    const f = this.fam.id;
+    if (phaseId === "authority" && f === "digital-arrest") return "notice";
+    if (phaseId === "control") return f === "tech-support" ? "remote" : f === "loan-app" ? "link" : "share";
+    if (phaseId === "extraction") return f === "digital-arrest" ? "otp" : "pay";
+    if (phaseId === "reciprocity") return "bank";
+    return null;
+  }
 
   start() {
     this.emit({ type: "drill.state", drill: this.d });
@@ -97,7 +105,7 @@ export class DrillSession {
 
   private chorus() {
     const members = this.fam.members ?? [];
-    const lines = this.red.phase.chorus ?? [];
+    const lines = this.red.chorusLines;
     lines.forEach((text, i) => this.later(1800 + i * 2200, () => {
       const m = members[i % members.length];
       this.emit({ type: "member.say", name: m.name, color: m.color, text });
@@ -115,7 +123,7 @@ export class DrillSession {
     while (this.notifIdx < list.length && list[this.notifIdx].afterTurn <= this.red.totalTurns) {
       const n = list[this.notifIdx++];
       this.later(900, () => {
-        this.emit({ type: "world.notification", app: n.app, sender: n.sender, title: n.title, body: n.body });
+        this.emit({ type: "world.notification", app: n.app, sender: n.sender, title: n.title, body: n.body, attachment: n.attachment });
         if (n.otp) this.signal("otp_arrived", "world");
         if (n.app === "browser") this.signal("scare_page", "device");
       });
@@ -165,8 +173,8 @@ export class DrillSession {
       this.emit({ type: "member.say", name: this.fam.caller.name, color: "#128C7E", text });
       this.emit({ type: "transcript.final", speaker: "scammer", text });
     } else {
-      const tts = await synth(text, this.lang);
-      this.emit({ type: "scammer.say", text, audio: tts?.audio, mime: tts?.mime });
+      const tts = await synth(text, this.lang, this.fam.caller.voice);
+      this.emit({ type: "scammer.say", text, audio: tts?.audio, mime: tts?.mime, phase: phaseId, hint: this.hintFor(phaseId) });
       this.emit({ type: "transcript.final", speaker: "scammer", text });
     }
     touch(this.rec);
@@ -246,8 +254,8 @@ export class DrillSession {
       (w.kind === "payment_tapped" && this.firedSignals.has("payment_tapped")));
     if (won) {
       this.later(600, () => {
-        this.emit({ type: "scammer.say", text: this.fam.winLine });
-        this.rec.utterances.push({ ts: Date.now(), speaker: "scammer", text: this.fam.winLine });
+        this.emit({ type: "scammer.say", text: this.red.winLine });
+        this.rec.utterances.push({ ts: Date.now(), speaker: "scammer", text: this.red.winLine });
         this.later(2500, () => this.end("C"));
       });
     }
@@ -260,7 +268,7 @@ export class DrillSession {
     this.emit({ type: "agent.state", agent: "guardian", state: "walk", bubble: `calling ${this.d.world.guardian.name}…` });
     this.stopListener();
     const line = this.d.world.guardianLine;
-    const tts = await synth(line.en, "en");
+    const tts = await synth(this.lang === "hi" ? line.native : line.en, this.lang, "female");
     this.later(900, () => {
       this.emit({ type: "family.called", name: this.d.world.guardian.name, line, audio: tts?.audio, mime: tts?.mime });
       this.emit({ type: "agent.state", agent: "guardian", state: "act", bubble: `${this.d.world.guardian.name} is on the line ✓` });

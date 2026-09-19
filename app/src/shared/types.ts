@@ -10,6 +10,8 @@ export type AgentName = "listener" | "analyst" | "archivist" | "guardian" | "rep
 export type AgentState = "idle" | "walk" | "act";
 export type LadderState = "armed" | "warn" | "nudge" | "tripped" | "ended";
 export type Ending = "A" | "B" | "C";
+export type Lang = "en" | "hi";
+export type UiHint = "share" | "otp" | "bank" | "link" | "remote" | "pay" | "notice" | null;
 
 export interface Contact { name: string; number: string; relation?: string; avatar?: string }
 export interface SmsThread { sender: string; messages: { from: "them" | "me"; text: string; ts: string }[] }
@@ -42,6 +44,7 @@ export interface DrillSummary {
   device: DeviceKind;
   channel: string;
   hardMode: boolean;
+  language: Lang;
   createdAt: number;
   startedAt?: number;
   endedAt?: number;
@@ -81,7 +84,7 @@ export type ServerEvent =
   | { type: "call.incoming"; seq: number }
   | { type: "transcript.partial"; speaker: "judge" | "scammer"; text: string; seq: number }
   | { type: "transcript.final"; speaker: "judge" | "scammer" | "member"; text: string; name?: string; seq: number }
-  | { type: "scammer.say"; text: string; audio?: string; mime?: string; seq: number }
+  | { type: "scammer.say"; text: string; audio?: string; mime?: string; phase?: string; hint?: UiHint; seq: number }
   | { type: "member.say"; name: string; color: string; text: string; seq: number }
   | { type: "move.pinned"; tactics: Tactic[]; delta: number; quote: string; index: number; seq: number }
   | { type: "index.update"; index: number; delta: number; seq: number }
@@ -92,7 +95,7 @@ export type ServerEvent =
   | { type: "family.called"; name: string; line: { native: string; en: string }; audio?: string; mime?: string; seq: number }
   | { type: "packet.progress"; percent: number; seq: number }
   | { type: "packet.ready"; url: string; seq: number }
-  | { type: "world.notification"; app: string; sender?: string; title: string; body: string; seq: number }
+  | { type: "world.notification"; app: string; sender?: string; title: string; body: string; attachment?: string; seq: number }
   | { type: "agent.state"; agent: AgentName; state: AgentState; bubble?: string; seq: number }
   | { type: "drill.ended"; ending: Ending; seq: number }
   | { type: "error"; message: string; seq: number };
@@ -113,4 +116,5 @@ export interface CreateDrillBody {
   family: FamilyId | "surprise";
   device?: DeviceKind | "auto";
   hardMode?: boolean;
+  language?: Lang;
 }

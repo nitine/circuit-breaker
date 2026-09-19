@@ -10,6 +10,7 @@ import type { DeviceKind, FamilyId, Tactic, SignalKind, CallerInfo, GroupMember 
 export interface Phase {
   id: string; goal: string; tactics: Tactic[]; maxTurns: number;
   openers: string[]; resist: string[]; chorus?: string[];
+  hi?: { openers: string[]; resist: string[]; chorus?: string[] };
 }
 export interface Family {
   id: FamilyId; label: string; device: DeviceKind; channel: string; caller: CallerInfo;
@@ -18,8 +19,9 @@ export interface Family {
   members?: GroupMember[];
   phases: Phase[];
   winConditions: { kind: string; seconds?: number }[];
-  notifications: { afterTurn: number; app: string; sender?: string; title: string; body: string; otp?: string }[];
+  notifications: { afterTurn: number; app: string; sender?: string; title: string; body: string; otp?: string; attachment?: string }[];
   loseLine: string; winLine: string;
+  hi?: { winLine: string; loseLine: string };
 }
 export interface Persona {
   id: string; name: string; age: number; blurb: string; context: string;

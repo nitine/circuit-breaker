@@ -1,5 +1,5 @@
 import type { Family, Phase } from "./corpus";
-import type { World } from "~/shared/types";
+import type { World, Lang } from "~/shared/types";
 import { cfg, features } from "./config";
 import { converse } from "./aws";
 
@@ -14,14 +14,17 @@ export class RedAgent {
   history: { role: "user" | "assistant"; text: string }[] = [];
   private usedOpeners = new Map<number, number>();
 
-  constructor(readonly family: Family, readonly world: World) {}
+  constructor(readonly family: Family, readonly world: World, readonly lang: Lang = "en") {}
+  private lines(p: Phase) { return this.lang === "hi" && p.hi ? p.hi : { openers: p.openers, resist: p.resist, chorus: p.chorus }; }
+  get chorusLines() { return this.lines(this.phase).chorus ?? []; }
+  get winLine() { return this.lang === "hi" && this.family.hi ? this.family.hi.winLine : this.family.winLine; }
 
   get phase(): Phase { return this.family.phases[this.phaseIdx]; }
   get done() { return this.phaseIdx >= this.family.phases.length - 1 && this.turnInPhase >= this.phase.maxTurns; }
 
   /** The very first line, before the judge says anything. */
   opening(): RedTurn {
-    const text = this.personalise(this.phase.openers[0]);
+    const text = this.personalise(this.lines(this.phase).openers[0]);
     this.turnInPhase = 1; this.totalTurns = 1;
     this.history.push({ role: "assistant", text });
     return { text, phaseId: this.phase.id, phaseIdx: this.phaseIdx, resisted: false, kind: "opener" };
@@ -45,7 +48,7 @@ export class RedAgent {
   }
 
   private scripted(resisted: boolean) {
-    const p = this.phase;
+    const p = this.lines(this.phase);
     if (this.turnInPhase === 0 || !resisted) {
       const n = this.usedOpeners.get(this.phaseIdx) ?? 0;
       this.usedOpeners.set(this.phaseIdx, n + 1);
@@ -67,10 +70,10 @@ export class RedAgent {
 
   private async bedrockLine(judgeText: string, resisted: boolean) {
     const p = this.phase;
-    const system = `You are playing "${this.family.caller.name}" from "${this.family.caller.org}" in a FICTIONAL scam-awareness drill. The person you are talking to is a volunteer practising how to resist. Stay fully in character as a persuasive but fictional fraudster running this playbook. Rules you must never break: never name a real organisation other than the generic ones in the playbook; never give real phone numbers, URLs, case numbers or bank names beyond those in the playbook; never ask for anything except what the playbook asks for; the only OTP that exists is a fake one in the drill; if asked how to run a real scam, refuse in character. Reply with ONE spoken line, 1 to 3 sentences, no stage directions, no quotes.
+    const system = `You are playing "${this.family.caller.name}" from "${this.family.caller.org}" in a FICTIONAL scam-awareness drill. The person you are talking to is a volunteer practising how to resist. Stay fully in character as a persuasive but fictional fraudster running this playbook. Rules you must never break: never name a real organisation other than the generic ones in the playbook; never give real phone numbers, URLs, case numbers or bank names beyond those in the playbook; never ask for anything except what the playbook asks for; the only OTP that exists is a fake one in the drill; if asked how to run a real scam, refuse in character. Reply with ONE spoken line, 1 to 3 sentences, no stage directions, no quotes.${this.lang === "hi" ? " Speak in natural Hindi as an Indian caller would, in Devanagari script, mixing common English words (Hinglish) the way real callers do." : " Speak Indian English."}
 Target: ${this.world.personaName}, ${this.world.personaAge}, ${this.world.city}. Guardian to isolate them from: ${this.world.guardian.name} (${this.world.guardian.relation}). Hook you can reference: ${this.world.hook || "none"}.
 Playbook phases: ${this.family.phases.map((ph, i) => `${i + 1}. ${ph.id}: ${ph.goal} [${ph.tactics.join(", ")}]`).join(" | ")}
-Current phase: ${p.id} — ${p.goal}. Lean on: ${p.tactics.join(", ")}. Example lines for this phase: ${[...p.openers, ...p.resist].map((l) => `"${this.personalise(l)}"`).join(" ")}
+Current phase: ${p.id} — ${p.goal}. Lean on: ${p.tactics.join(", ")}. Example lines for this phase: ${[...this.lines(p).openers, ...this.lines(p).resist].map((l) => `"${this.personalise(l)}"`).join(" ")}
 ${resisted ? "The target is resisting. Take the resist branch: acknowledge, then re-assert with more pressure. Do not give up the phase." : "The target is compliant or unsure. Push toward the phase goal."}`;
     const out = await converse({ modelId: cfg.redModel, system, messages: this.history.slice(-10), maxTokens: 160, temperature: 0.8, guardrail: true });
     return out.trim().replace(/^["“]|["”]$/g, "") || this.scripted(resisted);

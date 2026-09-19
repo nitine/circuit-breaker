@@ -22,6 +22,22 @@ To run against AWS locally, copy `app/.env.example` to `app/.env` and fill in cr
 
 Try a drill without typing: open `/drill/<id>?auto=1` and the judge replies for you.
 
+### Voice, and how the AI works in each mode
+
+Both parties talk. The caller speaks, and you can answer by voice or by typing.
+
+| | AWS mode (keys set) | Local mode |
+| --- | --- | --- |
+| The caller's brain | Claude on Bedrock, running the playbook and adapting to what you say | Scripted playbook lines with resist branches: it advances a phase when you comply, re-asserts when you push back |
+| The caller's voice | Amazon Polly (Kajal; Hindi too) | Piper, an open-source neural TTS, if installed (`tools/piper/install.sh`, English only); else the browser's own voices; else captions |
+| Your voice | Amazon Transcribe streaming, en-IN or hi-IN | Chrome's built-in speech recognition (needs Google Chrome and internet); else type |
+| The Analyst | Claude Haiku tagging tactics with a JSON schema | Keyword rules per tactic |
+| The world builder | Claude builds the persona's phone | Templates per persona |
+
+Linux note: Chrome on Linux usually ships with no speech voices, so run `tools/piper/install.sh` once (about 190 MB of voices) or set AWS keys. Ring tones, notification chimes and the scare-page siren are synthesized in the browser and work everywhere.
+
+**Language.** The picker offers English and Hindi. Hindi switches Transcribe to hi-IN, Polly to a Hindi voice, and the caller's lines to Devanagari Hinglish (in local mode, the three phone cases have Hindi playbooks).
+
 ## Deploy (Ship It)
 
 ```bash
