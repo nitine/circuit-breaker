@@ -1,0 +1,104 @@
+/* Windows 11 replica */
+.win11 { --w-accent: #0067c0; width: 860px; height: 560px; border-radius: 12px; background: #111; padding: 8px; box-shadow: 0 30px 60px #00000099, inset 0 0 0 2px #333; position: relative; font-family: "Segoe UI Variable", "Segoe UI", Inter, system-ui, sans-serif; color: #1a1a1a; }
+.win11 .desktop { position: relative; width: 100%; height: 100%; border-radius: 6px; overflow: hidden; background: radial-gradient(1200px 500px at 70% 10%, #7dd3fc 0%, #2563eb 35%, #1e3a8a 70%, #0f172a 100%); }
+.win11 .bloom { position: absolute; inset: 0; background: radial-gradient(400px 300px at 60% 55%, #93c5fd88, transparent 70%), radial-gradient(300px 260px at 35% 60%, #60a5fa66, transparent 70%); }
+.win-taskbar { position: absolute; left: 0; right: 0; bottom: 0; height: 48px; background: #f3f3f3ee; backdrop-filter: blur(20px); border-top: 1px solid #ffffff88; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.win-taskbar .tb { width: 40px; height: 40px; border-radius: 6px; display: grid; place-items: center; font-size: 18px; border: 0; background: none; position: relative; }
+.win-taskbar .tb:hover { background: #00000010; }
+.win-taskbar .tb.run::after { content: ""; position: absolute; bottom: 2px; left: 14px; right: 14px; height: 3px; border-radius: 2px; background: var(--w-accent); }
+.win-taskbar .tray { position: absolute; right: 10px; top: 0; bottom: 0; display: flex; align-items: center; gap: 10px; font-size: 12px; color: #1a1a1a; }
+.win-taskbar .tray .clock { text-align: right; line-height: 1.2; }
+.win-start { position: absolute; left: 50%; bottom: 56px; transform: translateX(-50%); width: 520px; background: #f9f9f9f2; backdrop-filter: blur(30px); border: 1px solid #e5e5e5; border-radius: 8px; padding: 24px; box-shadow: 0 8px 32px #0003; z-index: 40; }
+.win-start input { width: 100%; padding: 10px 14px; border-radius: 20px; border: 1px solid #ccc; margin-bottom: 18px; }
+.win-start .pins { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.win-start .pins button { background: none; border: 0; border-radius: 6px; padding: 8px 4px; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.win-start .pins button:hover { background: #00000008; }
+.win-start .pins i { width: 32px; height: 32px; border-radius: 6px; display: grid; place-items: center; font-style: normal; font-size: 18px; color: #fff; }
+.win-window { position: absolute; background: #fff; border: 1px solid #c8c8c8; border-radius: 8px; box-shadow: 0 10px 30px #0004; display: flex; flex-direction: column; overflow: hidden; }
+.win-window.focus { box-shadow: 0 16px 40px #0006; border-color: #aaa; }
+.win-title { height: 32px; background: #f3f3f3; display: flex; align-items: center; padding-left: 10px; font-size: 12px; gap: 8px; cursor: default; user-select: none; }
+.win-title .ctl { margin-left: auto; display: flex; height: 100%; }
+.win-title .ctl button { width: 46px; height: 100%; border: 0; background: none; font-size: 12px; }
+.win-title .ctl button:hover { background: #00000010; }
+.win-title .ctl button.x:hover { background: #c42b1c; color: #fff; }
+.win-body { flex: 1; overflow: hidden; position: relative; }
+.win-toast { position: absolute; right: 12px; bottom: 60px; width: 360px; background: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 8px 24px #0003; padding: 14px 16px; display: flex; gap: 12px; z-index: 50; animation: toastIn .35s ease-out; cursor: pointer; }
+@keyframes toastIn { from { transform: translateX(120%); opacity: 0 } to { transform: none; opacity: 1 } }
+.win-toast .ic { width: 32px; height: 32px; border-radius: 6px; display: grid; place-items: center; color: #fff; font-weight: 700; flex: none; }
+.win-toast b { display: block; font-size: 13px; }
+.win-toast span { display: block; font-size: 12px; color: #333; line-height: 1.35; }
+.win-toast small { color: #777; font-size: 11px; }
+/* Chrome */
+.chrome { height: 100%; display: flex; flex-direction: column; background: #fff; }
+.chrome .tabs { background: #dee1e6; display: flex; align-items: flex-end; padding: 8px 8px 0; gap: 2px; height: 40px; }
+.chrome .tab { background: #fff; border-radius: 8px 8px 0 0; padding: 7px 12px; font-size: 12px; display: flex; align-items: center; gap: 8px; max-width: 220px; }
+.chrome .tab.off { background: #dee1e6; color: #444; }
+.chrome .tab i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+.chrome .bar { display: flex; align-items: center; gap: 10px; padding: 6px 10px; background: #fff; border-bottom: 1px solid #e5e5e5; }
+.chrome .bar .nav { color: #5f6368; font-size: 16px; display: flex; gap: 10px; }
+.chrome .omni { flex: 1; background: #f1f3f4; border-radius: 20px; padding: 7px 14px; font-size: 13px; display: flex; align-items: center; gap: 8px; color: #202124; }
+.chrome .omni .lock { color: #5f6368; font-size: 12px; }
+.chrome .omni .warn { color: #c5221f; font-size: 12px; }
+.chrome .avatar { width: 26px; height: 26px; border-radius: 50%; background: #1a73e8; color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 600; }
+.chrome .page { flex: 1; overflow: auto; position: relative; }
+.scare { position: absolute; inset: 0; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; gap: 10px; }
+.scare .modal { border: 1px solid #ccc; box-shadow: 0 10px 40px #0004; padding: 22px 26px; max-width: 480px; background: #fff; }
+.scare .modal h2 { margin: 0 0 6px; font-size: 18px; color: #c42b1c; display: flex; gap: 8px; align-items: center; }
+.scare .modal p { margin: 6px 0; font-size: 13px; color: #333; }
+.scare .modal .num { font-size: 22px; font-weight: 700; color: #0067c0; }
+.scare .modal button { margin-top: 10px; background: #0067c0; color: #fff; border: 0; padding: 8px 16px; border-radius: 4px; }
+.careers { padding: 24px 40px; font-family: Inter, sans-serif; }
+.careers .hd { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; color: #000; margin-bottom: 14px; }
+.careers .hd i { width: 12px; height: 12px; background: #86bc25; border-radius: 50%; display: inline-block; }
+.careers .card { border: 1px solid #e5e5e5; border-radius: 8px; padding: 18px; max-width: 520px; }
+.careers .pay { background: #000; color: #fff; border: 0; padding: 12px 18px; border-radius: 4px; font-weight: 600; margin-top: 12px; }
+/* Gmail */
+.gmail { height: 100%; display: flex; background: #f6f8fc; font-size: 13px; }
+.gmail .nav { width: 200px; padding: 12px; }
+.gmail .compose { background: #c2e7ff; border-radius: 16px; padding: 14px 20px; font-weight: 500; display: inline-block; margin-bottom: 12px; }
+.gmail .nav div.item { padding: 6px 12px; border-radius: 16px; }
+.gmail .nav div.item.on { background: #d3e3fd; font-weight: 600; }
+.gmail .list { flex: 1; background: #fff; border-radius: 16px; margin: 8px 8px 8px 0; overflow: auto; }
+.gmail .mail { display: flex; gap: 12px; padding: 10px 16px; border-bottom: 1px solid #f1f3f4; cursor: pointer; }
+.gmail .mail.unread { font-weight: 700; }
+.gmail .mail .from { width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gmail .mail .subj { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 400; }
+.gmail .mail.unread .subj { font-weight: 700; }
+.gmail .read { padding: 20px 24px; }
+.gmail .read h2 { margin: 0 0 12px; font-size: 20px; font-weight: 400; }
+.gmail .read .hdr { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
+.gmail .read .hdr .av { width: 40px; height: 40px; border-radius: 50%; background: #86bc25; color: #fff; display: grid; place-items: center; font-weight: 700; }
+.gmail .read .body p { margin: 8px 0; line-height: 1.5; }
+.gmail .read .attach { display: inline-flex; gap: 8px; align-items: center; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; margin-top: 10px; }
+.gmail .read a { color: #1a0dab; }
+/* Meet */
+.meet { height: 100%; background: #202124; color: #fff; display: flex; flex-direction: column; }
+.meet .stage { flex: 1; display: grid; grid-template-columns: 1fr 200px; gap: 8px; padding: 8px; }
+.meet .tile { border-radius: 8px; overflow: hidden; position: relative; background: #3c4043; }
+.meet .tile .nm { position: absolute; left: 10px; bottom: 8px; font-size: 12px; background: #0008; padding: 2px 6px; border-radius: 4px; }
+.meet .bar { height: 64px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.meet .bar button { width: 40px; height: 40px; border-radius: 50%; border: 0; background: #3c4043; color: #fff; font-size: 16px; }
+.meet .bar button.end { background: #ea4335; width: 56px; border-radius: 20px; }
+.meet .bar .info { position: absolute; left: 16px; bottom: 22px; font-size: 13px; }
+.meet .sheet { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: #fff; color: #202124; border-radius: 12px; padding: 20px; width: 380px; box-shadow: 0 10px 30px #0006; z-index: 5; }
+.meet .sheet h4 { margin: 0 0 10px; font-size: 16px; }
+.meet .sheet .opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+.meet .sheet .opts div { border: 1px solid #ddd; border-radius: 8px; padding: 22px 6px; text-align: center; font-size: 12px; }
+.meet .sheet .row { display: flex; gap: 8px; justify-content: flex-end; }
+.meet .sheet .row button { padding: 8px 14px; border-radius: 4px; border: 1px solid #ddd; background: #fff; }
+.meet .sheet .row button.go { background: #1a73e8; color: #fff; border-color: #1a73e8; }
+/* AnyDesk */
+.anydesk { height: 100%; display: flex; flex-direction: column; background: #fff; }
+.anydesk .hd { background: #ef443b; color: #fff; padding: 10px 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.anydesk .body { padding: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.anydesk .box { border: 1px solid #e5e5e5; border-radius: 6px; padding: 14px; }
+.anydesk .box h4 { margin: 0 0 8px; font-size: 13px; color: #555; }
+.anydesk .addr { font-size: 22px; font-weight: 700; letter-spacing: 1px; color: #ef443b; }
+.anydesk .req { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 380px; background: #fff; border: 1px solid #ccc; box-shadow: 0 10px 30px #0004; border-radius: 6px; padding: 18px; z-index: 5; }
+.anydesk .req h4 { margin: 0 0 8px; font-size: 14px; }
+.anydesk .req p { margin: 0 0 12px; font-size: 12px; color: #444; }
+.anydesk .req .perm { font-size: 12px; margin: 4px 0; }
+.anydesk .req .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+.anydesk .req .row button { padding: 7px 16px; border-radius: 4px; border: 1px solid #ccc; background: #fff; }
+.anydesk .req .row button.ok { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+.win-family { position: absolute; inset: 0; z-index: 60; background: #fffffff2; color: #1a1410; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; animation: fadeIn .4s; }

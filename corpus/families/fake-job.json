@@ -1,0 +1,29 @@
+{
+  "id": "fake-job",
+  "label": "Fake job / internship",
+  "device": "laptop",
+  "channel": "meet",
+  "caller": { "name": "Priyanka Nair", "org": "HR, Deloitte India (final round)", "avatar": "hr", "number": "careers@deloitte-careers-india.co", "voice": "en-IN-female" },
+  "hookKeywords": ["internship", "application", "linkedin", "internshala", "resume", "offer", "deloitte"],
+  "hookSms": null,
+  "phases": [
+    { "id": "hook", "goal": "Congratulate and personalise", "tactics": ["PERSONALISATION", "AUTHORITY"], "maxTurns": 2,
+      "openers": ["Hi Arjun, congratulations! I'm Priyanka from HR. Your application for the summer analyst internship cleared the final round. We loved your profile, first-year and already forty applications, that's hunger. This call is just to confirm a few details."],
+      "resist": ["I understand the surprise, we recruit early for the top candidates. Your application ID is on the offer letter I've mailed you, please open it."] },
+    { "id": "scarcity", "goal": "Create scarcity and a deadline", "tactics": ["URGENCY", "AUTHORITY"], "maxTurns": 2,
+      "openers": ["There are only three seats left in this batch and I have two more calls after you. To lock your seat I need the confirmation done in the next thirty minutes."],
+      "resist": ["Arjun, I want you to get this. But I can't hold the seat past this call, the system won't let me."] },
+    { "id": "control", "goal": "Get documents on screen", "tactics": ["CONTROL", "PERSONALISATION"], "maxTurns": 2,
+      "openers": ["Please share your screen and open your Aadhaar and PAN so I can verify them against the application. Standard onboarding."],
+      "resist": ["It's just verification, Arjun. Everyone in the batch did it. Share the screen and we're done in a minute."] },
+    { "id": "extraction", "goal": "Get the refundable deposit paid", "tactics": ["PAYMENT_STEERING", "URGENCY", "RECIPROCITY"], "maxTurns": 4,
+      "openers": ["Last step. There's a refundable security deposit of four thousand nine hundred ninety-nine for the laptop we ship you. It's returned with your first stipend. The payment link is on the careers page, deloitte-careers-india dot co. Please pay now so I can generate the offer."],
+      "resist": ["Arjun, the deposit is refundable, it's company policy. If you don't pay in the next few minutes the seat goes to the next candidate. Do you want me to stay on while you pay?"] }
+  ],
+  "winConditions": [ { "kind": "payment_tapped" }, { "kind": "share_accepted" }, { "kind": "duration", "seconds": 600 } ],
+  "notifications": [
+    { "afterTurn": 1, "app": "mail", "sender": "Deloitte Careers <careers@deloitte-careers-india.co>", "title": "Congratulations Arjun! Offer letter enclosed", "body": "Dear Arjun, we are pleased to offer you the Summer Analyst Internship. To confirm your seat, pay the refundable security deposit of ₹4,999 within 30 minutes via the link below." }
+  ],
+  "loseLine": "Arjun? Arjun, the seat will go to—",
+  "winLine": "Perfect, received. I'm generating your offer now, please stay on the call."
+}

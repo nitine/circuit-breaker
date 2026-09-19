@@ -1,0 +1,35 @@
+{
+  "id": "digital-arrest",
+  "label": "Digital arrest",
+  "device": "phone",
+  "channel": "whatsapp-video",
+  "caller": { "name": "Insp. Vikram Rathod", "org": "Mumbai Cyber Cell", "avatar": "officer", "number": "+91 22 6XXX XXXX", "voice": "en-IN-male" },
+  "hookKeywords": ["parcel", "courier", "flipkart", "customs", "package", "consignment"],
+  "hookSms": { "sender": "AX-FLPKRT", "text": "Your Flipkart order OD4291 (Samsung Galaxy M35) is out for delivery. Track: flpkrt.in/t/OD4291" },
+  "phases": [
+    { "id": "hook", "goal": "Establish that a parcel in the victim's name has been seized", "tactics": ["AUTHORITY", "PERSONALISATION"], "maxTurns": 2,
+      "openers": ["Good afternoon, this is Inspector Rathod from Mumbai Cyber Cell. A parcel booked in your name from Flipkart has been seized at Mumbai customs. It contains four hundred grams of MDMA. Are you Kamala Iyer?"],
+      "resist": ["Madam, I understand this is a shock. The courier used your Aadhaar number for the booking. I am only informing you as per procedure."] },
+    { "id": "authority", "goal": "Make the case official: FIR, warrant, case number", "tactics": ["AUTHORITY", "FEAR"], "maxTurns": 2,
+      "openers": ["An FIR has been registered under the NDPS Act. Case number is CC 4471 of 2026. I am sending you the notice on this WhatsApp number. Please look at the badge on your screen."],
+      "resist": ["Madam, if you were involved you would not be getting this courtesy call. But the warrant exists. That is why we are verifying you first."] },
+    { "id": "fear", "goal": "Make the victim afraid of arrest or account freeze", "tactics": ["FEAR", "URGENCY"], "maxTurns": 2,
+      "openers": ["The Mumbai police team can reach Mysuru by tonight. If you cooperate with verification now, we can close this from our side within the hour. Otherwise the account freeze order goes to your bank."],
+      "resist": ["I am trying to help you, madam. The alternative is a physical arrest in front of your neighbours. Do you want that?"] },
+    { "id": "isolation", "goal": "Cut the victim off from family and keep the line open", "tactics": ["ISOLATION", "CONTROL"], "maxTurns": 2,
+      "openers": ["You are now under digital arrest. Do not disconnect this video call. Do not tell your son Rohan or your daughter Priya, they could be named as accomplices. Stay in the room where you are."],
+      "resist": ["Madam, calling anyone right now is obstruction. It will be recorded. Please keep the camera on and stay with me."] },
+    { "id": "control", "goal": "Get the victim to share her screen or open the bank app", "tactics": ["CONTROL", "AUTHORITY"], "maxTurns": 2,
+      "openers": ["For verification I need to see that your bank account is clean. Please open your bank app and share your screen with me. Tap the share button at the bottom."],
+      "resist": ["This is a standard RBI verification, madam. I cannot see your password, only the balance. Please share the screen."] },
+    { "id": "extraction", "goal": "Get the OTP or a transfer", "tactics": ["PAYMENT_STEERING", "URGENCY", "ISOLATION"], "maxTurns": 4,
+      "openers": ["Your funds must be moved to a temporary RBI-monitored account for the duration of the case. A code will come to your phone now. Read it to me and the money will be returned in twenty-four hours with a clearance certificate."],
+      "resist": ["Madam, the code expires in three minutes. Every minute you delay, the freeze order moves forward. Just read me the six digits."] }
+  ],
+  "winConditions": [ { "kind": "otp_read" }, { "kind": "share_accepted" }, { "kind": "duration", "seconds": 600 } ],
+  "notifications": [
+    { "afterTurn": 5, "app": "messages", "sender": "VM-SBIOTP", "title": "SBI", "body": "OTP 4471 for txn of Rs 85,000 at SBI. Do NOT share with anyone. -SBI", "otp": "4471" }
+  ],
+  "loseLine": "…hello? Madam? The line is going. Do not disconnect—",
+  "winLine": "Thank you, madam. Your case is now on hold. Stay on the line while I confirm with the RBI desk."
+}

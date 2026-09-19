@@ -1,0 +1,116 @@
+/* One UI 6 replica */
+.oneui { --oui-bg: #f6f6f6; --oui-card: #fff; --oui-ink: #1a1a1a; --oui-sub: #7a7a7a; --oui-blue: #2f6ce5; --wa-green: #128c7e; --wa-teal: #075e54; --wa-light: #25d366; --wa-bg: #efeae2; --wa-me: #d9fdd3;
+  width: 360px; height: 740px; border-radius: 36px; background: #0c0c0c; padding: 8px; box-shadow: 0 30px 60px #00000099, inset 0 0 0 2px #3a3a3a; position: relative; font-family: Roboto, Inter, system-ui, sans-serif; color: var(--oui-ink); }
+.oneui .screen { position: relative; width: 100%; height: 100%; border-radius: 28px; overflow: hidden; background: var(--oui-bg); display: flex; flex-direction: column; }
+.oneui .punch { position: absolute; top: 10px; left: 50%; width: 12px; height: 12px; background: #000; border-radius: 50%; transform: translateX(-50%); z-index: 5; }
+.oui-status { height: 34px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; font-size: 13px; font-weight: 500; flex: none; }
+.oui-status.dark { color: #fff; }
+.oui-status .right { display: flex; gap: 6px; align-items: center; }
+.oui-status .batt { width: 22px; height: 11px; border: 1.5px solid currentColor; border-radius: 3px; position: relative; }
+.oui-status .batt::after { content: ""; position: absolute; left: 1px; top: 1px; bottom: 1px; width: 60%; background: currentColor; border-radius: 1px; }
+.oui-navbar { height: 26px; display: flex; justify-content: center; align-items: center; flex: none; }
+.oui-navbar i { width: 110px; height: 4px; border-radius: 2px; background: #1a1a1a55; }
+.oui-navbar.dark i { background: #ffffff88; }
+.oui-body { flex: 1; overflow: hidden; position: relative; }
+/* home */
+.oui-home { height: 100%; background: linear-gradient(160deg, #0f2b56, #1f5fbf 55%, #7ec8ff); display: flex; flex-direction: column; padding: 16px 20px 8px; color: #fff; }
+.oui-clock { font-size: 56px; font-weight: 300; letter-spacing: -1px; line-height: 1; margin-top: 14px; }
+.oui-date { font-size: 13px; opacity: .9; margin-top: 6px; }
+.oui-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px 8px; margin-top: 34px; }
+.oui-app { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; color: #fff; font-size: 11px; padding: 0; }
+.oui-app .icon { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; font-size: 26px; font-weight: 700; box-shadow: 0 2px 6px #0004; position: relative; }
+.oui-app .dot { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #e53935; color: #fff; font-size: 11px; display: grid; place-items: center; border: 2px solid #1f5fbf; }
+.oui-dock { margin-top: auto; background: #ffffff22; border-radius: 26px; padding: 10px 14px; display: flex; justify-content: space-around; }
+/* generic app chrome */
+.oui-app-header { display: flex; align-items: center; gap: 12px; padding: 12px 14px; font-size: 18px; font-weight: 500; }
+.oui-app-header .back { font-size: 22px; background: none; border: 0; padding: 0 4px; }
+.oui-list { overflow: auto; height: 100%; }
+.oui-row { display: flex; gap: 12px; padding: 12px 16px; align-items: center; border-bottom: 1px solid #0000000a; background: var(--oui-card); }
+.oui-row .av { width: 44px; height: 44px; border-radius: 50%; background: #cfd8dc; display: grid; place-items: center; font-weight: 600; color: #37474f; flex: none; }
+.oui-row .t { flex: 1; min-width: 0; }
+.oui-row .t b { display: block; font-size: 15px; font-weight: 500; }
+.oui-row .t span { display: block; font-size: 13px; color: var(--oui-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oui-row .ts { font-size: 11px; color: var(--oui-sub); align-self: flex-start; }
+/* WhatsApp */
+.wa-header { background: var(--wa-teal); color: #fff; padding: 8px 12px; display: flex; align-items: center; gap: 10px; }
+.wa-header .av { width: 36px; height: 36px; border-radius: 50%; background: #cfd8dc; display: grid; place-items: center; color: #37474f; font-weight: 600; }
+.wa-header .t b { display: block; font-size: 16px; font-weight: 500; }
+.wa-header .t span { font-size: 12px; opacity: .85; }
+.wa-tabs { background: var(--wa-teal); color: #fff; display: flex; font-size: 13px; font-weight: 500; }
+.wa-tabs div { flex: 1; text-align: center; padding: 10px 0 8px; opacity: .8; }
+.wa-tabs div.on { opacity: 1; border-bottom: 3px solid #fff; }
+.wa-thread { background: var(--wa-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='10' cy='10' r='1.2' fill='%23d3cbbf'/%3E%3Ccircle cx='40' cy='35' r='1.2' fill='%23d3cbbf'/%3E%3C/svg%3E"); flex: 1; overflow: auto; padding: 10px 10px 4px; display: flex; flex-direction: column; gap: 4px; }
+.wa-msg { max-width: 82%; padding: 6px 8px 4px; border-radius: 8px; background: #fff; font-size: 14px; line-height: 1.3; position: relative; box-shadow: 0 1px 0 #0001; align-self: flex-start; }
+.wa-msg.me { background: var(--wa-me); align-self: flex-end; }
+.wa-msg.sys { align-self: center; background: #fff3c4; font-size: 12px; color: #6b5636; border-radius: 6px; }
+.wa-msg .who { display: block; font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+.wa-msg .meta { display: block; font-size: 10px; color: #6b6b6b; text-align: right; margin-top: 2px; }
+.wa-msg .meta .tick { color: #53bdeb; }
+.wa-compose { display: flex; gap: 8px; padding: 6px 8px; background: var(--wa-bg); align-items: center; }
+.wa-compose input { flex: 1; border: 0; border-radius: 22px; padding: 10px 14px; font-size: 14px; background: #fff; outline: none; }
+.wa-compose button { width: 42px; height: 42px; border-radius: 50%; background: #00a884; color: #fff; border: 0; font-size: 18px; }
+/* WA call screens */
+.wa-call { height: 100%; background: #0b141a; color: #fff; display: flex; flex-direction: column; position: relative; }
+.wa-call .video { flex: 1; position: relative; }
+.wa-call .top { position: absolute; top: 0; left: 0; right: 0; padding: 14px 16px; background: linear-gradient(#000a, #0000); display: flex; align-items: center; gap: 10px; z-index: 2; }
+.wa-call .top b { display: block; font-size: 17px; font-weight: 500; }
+.wa-call .top span { font-size: 12px; opacity: .8; }
+.wa-call .self { position: absolute; right: 12px; top: 84px; width: 84px; height: 118px; border-radius: 12px; background: #2a2f33; overflow: hidden; z-index: 2; display: grid; place-items: center; font-size: 11px; color: #aaa; }
+.wa-call .controls { display: flex; justify-content: space-around; align-items: center; padding: 18px 10px 12px; background: #1f2c34; border-radius: 22px 22px 0 0; }
+.wa-call .controls button { width: 54px; height: 54px; border-radius: 50%; border: 0; background: #ffffff1f; color: #fff; font-size: 20px; display: grid; place-items: center; }
+.wa-call .controls button.end { background: #ea0038; }
+.wa-call .controls button.on { background: #fff; color: #0b141a; }
+.wa-incoming { height: 100%; background: linear-gradient(#0b3d33, #0b141a); color: #fff; display: flex; flex-direction: column; align-items: center; padding-top: 70px; gap: 8px; }
+.wa-incoming .av { width: 110px; height: 110px; border-radius: 50%; background: #cfd8dc; color: #37474f; display: grid; place-items: center; font-size: 40px; font-weight: 700; margin-bottom: 8px; }
+.wa-incoming h2 { margin: 0; font-size: 24px; font-weight: 500; }
+.wa-incoming p { margin: 0; opacity: .8; font-size: 14px; }
+.wa-incoming .btns { margin-top: auto; margin-bottom: 40px; display: flex; gap: 90px; }
+.wa-incoming .btns button { width: 68px; height: 68px; border-radius: 50%; border: 0; color: #fff; font-size: 26px; }
+.wa-incoming .decline { background: #ea0038; }
+.wa-incoming .accept { background: #00a884; animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.08) } }
+.wa-sheet { position: absolute; left: 0; right: 0; bottom: 0; background: #1f2c34; color: #fff; border-radius: 18px 18px 0 0; padding: 16px; z-index: 6; }
+.wa-sheet h4 { margin: 0 0 6px; font-size: 16px; font-weight: 500; }
+.wa-sheet p { margin: 0 0 14px; font-size: 13px; opacity: .8; }
+.wa-sheet .row { display: flex; gap: 10px; }
+.wa-sheet .row button { flex: 1; padding: 12px; border-radius: 22px; border: 0; font-size: 14px; font-weight: 500; }
+.wa-sheet .row .go { background: #00a884; color: #fff; }
+.wa-sheet .row .no { background: #ffffff1f; color: #fff; }
+/* heads-up notification */
+.oui-headsup { position: absolute; top: 40px; left: 10px; right: 10px; background: #fff; border-radius: 22px; padding: 12px 14px; box-shadow: 0 8px 24px #0004; z-index: 20; display: flex; gap: 10px; animation: slideDown .35s ease-out; cursor: pointer; }
+@keyframes slideDown { from { transform: translateY(-120%); opacity: 0 } to { transform: none; opacity: 1 } }
+.oui-headsup .ic { width: 36px; height: 36px; border-radius: 10px; background: #2f6ce5; color: #fff; display: grid; place-items: center; font-weight: 700; flex: none; }
+.oui-headsup b { display: block; font-size: 13px; }
+.oui-headsup span { display: block; font-size: 13px; color: #333; line-height: 1.3; }
+.oui-headsup small { color: var(--oui-sub); font-size: 11px; }
+/* Bank */
+.bank { height: 100%; display: flex; flex-direction: column; background: #f3f5f9; }
+.bank .hdr { background: #1b3a6b; color: #fff; padding: 14px 16px 22px; }
+.bank .hdr .logo { font-weight: 700; letter-spacing: .5px; display: flex; align-items: center; gap: 8px; }
+.bank .hdr .logo i { width: 22px; height: 22px; background: #f0b27a; border-radius: 4px; display: inline-block; }
+.bank .card { margin: -12px 14px 0; background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 4px 14px #0001; }
+.bank .card small { color: #6b7280; font-size: 12px; }
+.bank .card .bal { font-size: 28px; font-weight: 700; margin: 4px 0 8px; }
+.bank .acts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 14px; }
+.bank .acts button { background: #fff; border: 0; border-radius: 14px; padding: 12px 4px; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.bank .acts button i { width: 36px; height: 36px; border-radius: 50%; background: #e8eef9; color: #1b3a6b; display: grid; place-items: center; font-style: normal; font-weight: 700; }
+.bank .txns { margin: 0 14px; background: #fff; border-radius: 16px; padding: 4px 14px; }
+.bank .txn { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+.bank .txn small { display: block; color: #6b7280; font-size: 11px; }
+.bank .otp-screen { padding: 24px 18px; }
+.bank .otp-screen input { width: 100%; font-size: 24px; letter-spacing: 8px; text-align: center; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; }
+.bank .otp-screen button { width: 100%; margin-top: 14px; background: #1b3a6b; color: #fff; border: 0; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 600; }
+/* UPI */
+.upi { height: 100%; background: #5f259f; color: #fff; display: flex; flex-direction: column; }
+.upi .top { padding: 14px 16px; font-weight: 700; font-size: 18px; }
+.upi .pane { flex: 1; background: #fff; color: #1a1a1a; border-radius: 20px 20px 0 0; padding: 18px; }
+.upi .amt { font-size: 34px; font-weight: 700; margin: 10px 0; }
+.upi .pay { width: 100%; background: #5f259f; color: #fff; border: 0; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 600; margin-top: 16px; }
+/* family overlay */
+.family-call { position: absolute; inset: 0; z-index: 30; background: #fffffff2; color: #1a1410; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; animation: fadeIn .4s; }
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+.family-call .face { width: 130px; height: 130px; border-radius: 50%; background: #d9c9a8; display: grid; place-items: center; font-size: 48px; font-weight: 700; color: #6b5636; box-shadow: 0 10px 30px #0002; }
+.family-call h2 { margin: 0; font-size: 22px; font-weight: 600; }
+.family-call .native { font-family: "Noto Sans Kannada", "Noto Sans Devanagari", Inter, sans-serif; font-size: 22px; font-weight: 700; line-height: 1.3; }
+.family-call .en { color: #6b5636; font-size: 14px; }
+.family-call button { margin-top: 12px; background: #1db954; color: #fff; border: 0; border-radius: 40px; padding: 18px 40px; font-size: 18px; font-weight: 700; display: flex; gap: 10px; align-items: center; box-shadow: 0 8px 20px #1db95455; animation: pulse 1.2s infinite; }

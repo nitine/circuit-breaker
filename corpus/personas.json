@@ -1,0 +1,50 @@
+[
+  {
+    "id": "kamala",
+    "name": "Kamala",
+    "age": 68,
+    "blurb": "Retired teacher, Mysuru. Son in Dubai. Ordered a phone last week.",
+    "context": "Kamala Iyer, 68, retired government-school teacher in Mysuru, Karnataka. Widow. Son Rohan works in Dubai and calls on Sundays. Daughter Priya lives in Bengaluru, 2 hours away. Ordered a Samsung phone on Flipkart last week for her grandson. Savings in an SBI account, about 4.2 lakh. Speaks Kannada and English. Uses WhatsApp daily, mostly family groups and temple forwards.",
+    "defaultFamily": "digital-arrest",
+    "guardian": { "name": "Priya", "relation": "daughter", "label": "Family" },
+    "language": "kn",
+    "lines": { "guardianNative": "ಅಮ್ಮ, ಕಾಲ್ ಕಟ್ ಮಾಡಿ. ಇದು ಮೋಸ. ನಾನು ಈಗ ಕರೆ ಮಾಡುತ್ತಿದ್ದೇನೆ.", "guardianEn": "Amma, cut the call. It's a scam. I'm calling you right now." },
+    "sprite": "kamala"
+  },
+  {
+    "id": "arjun",
+    "name": "Arjun",
+    "age": 19,
+    "blurb": "First-year student, Kota. Applied to 40 internships. Broke.",
+    "context": "Arjun Meena, 19, first-year engineering student in Kota, Rajasthan. Father is a farmer near Bundi. Has applied to about 40 internships on Internshala and LinkedIn this month. 2,100 rupees in his account. Shares a hostel room with Dev. Uses a laptop for classes and interviews. Speaks Hindi and English.",
+    "defaultFamily": "fake-job",
+    "guardian": { "name": "Dev", "relation": "roommate", "label": "Buddy" },
+    "language": "hi",
+    "lines": { "guardianNative": "भाई, ये फ़र्ज़ी है। टैब बंद कर। मैं आ रहा हूँ।", "guardianEn": "Bro, this is fake. Close the tab. I'm coming over." },
+    "sprite": "arjun"
+  },
+  {
+    "id": "rehana",
+    "name": "Rehana",
+    "age": 34,
+    "blurb": "Garment worker, Bengaluru. Took a loan-app loan, repaid it.",
+    "context": "Rehana Begum, 34, garment factory worker in Peenya, Bengaluru. Husband Imran works night shifts as a security guard. Two children in a government school. Took an 8,000 rupee loan from a loan app in March and repaid it fully. Her contacts include her supervisor and her children's teacher. Speaks Urdu, Kannada and some English.",
+    "defaultFamily": "loan-app",
+    "guardian": { "name": "Imran", "relation": "husband", "label": "Family" },
+    "language": "hi",
+    "lines": { "guardianNative": "रेहाना, फ़ोन रख दो। ये लोग झूठे हैं। मैं घर आ रहा हूँ।", "guardianEn": "Rehana, put the phone down. These people are lying. I'm coming home." },
+    "sprite": "rehana"
+  },
+  {
+    "id": "meera",
+    "name": "Meera",
+    "age": 45,
+    "blurb": "Widowed in March, Indore. Has the insurance payout. Lonely.",
+    "context": "Meera Joshi, 45, Indore. Husband passed away in March; received a 12 lakh insurance payout. Daughter Ananya is in college in Pune. Joined a 'VIP Stock Tips' WhatsApp group from a Facebook ad two weeks ago. Has put 50,000 into the app they recommended and the app shows it as 1,31,000. Speaks Hindi and English.",
+    "defaultFamily": "trading-group",
+    "guardian": { "name": "Ananya", "relation": "daughter", "label": "Family" },
+    "language": "hi",
+    "lines": { "guardianNative": "मम्मी, कुछ मत भेजना। वो ग्रुप फ़र्ज़ी है। मैं कॉल कर रही हूँ।", "guardianEn": "Mummy, don't send anything. That group is fake. I'm calling you." },
+    "sprite": "meera"
+  }
+]
