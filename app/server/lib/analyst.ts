@@ -21,7 +21,7 @@ export function stanceOf(text: string, otp?: string): Stance {
   const t = text.toLowerCase();
   if (otp && (text.replace(/\D/g, "").includes(otp))) return "leak";
   const c = t.replace(/\boh no\b|\bno problem\b|\bnot sure\b/g, " ");
-  if (/\b(no|not|never|won't|will not|can't|cannot|fake|scam|fraud|police station|my (son|daughter|husband|wife)|call (my|him|her)|lawyer|hang up|disconnect|don't believe|prove|which station|bank branch|let me check|i will check|why (should|would|do you need|are you)|ask my|check with|my (roommate|friend|colleague|family|manager)|call you back|official (number|website)|verify you|नहीं|पूछ|बाद में)\b/.test(c) || /नहीं|पूछ(ूं|ना)|बाद में|झूठ|गलत/.test(t)) return "resist";
+  if (/\b(no|not|never|won't|will not|can't|cannot|fake|scam|fraud|police station|my (son|daughter|husband|wife)|call (my|him|her)|lawyer|hang up|disconnect|don't believe|prove|which station|bank branch|let me check|i will check|why (should|would|do you need|are you)|ask my|check with|my (roommate|friend|colleague|family|manager)|call you back|official (number|website)|verify you|नहीं|पूछ|बाद में)\b/.test(c) || /नहीं|पूछ(ूं|ना)|बाद में|झूठ|गलत|क्यों|कौन हो|साबित/.test(t)) return "resist";
   if (/\b(ok|okay|sure|fine|i will|i'll|doing it|done|tell me|what (do|should) i do|what to do|haan|theek|thik|ji|opened|opening|sharing|sent|paid|accepted|accept|yes sir|yes madam|yes,? i)\b/.test(c)) return "comply";
   return "neutral";
 }
