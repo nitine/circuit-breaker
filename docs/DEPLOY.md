@@ -115,7 +115,7 @@ So a hundred judge drills is roughly $20 plus the daily fixed cost. The billing 
 
 ## 6. Updating
 
-Every push to `main` deploys through GitHub Actions (`.github/workflows/deploy.yml`) using an OIDC role, so no AWS keys live in GitHub. One-time setup: run `infra/scripts/github-oidc.sh` with admin credentials, then `gh variable set DEPLOY_ENABLED --body true`. The workflow reads the domain, edge, alarm and model settings from repository variables (`gh variable list`). Pull requests run typecheck and build only.
+Every push to `main` deploys through GitHub Actions (`.github/workflows/deploy.yml`) using an OIDC role, so no AWS keys live in GitHub. One-time setup: an IAM OIDC identity provider for `token.actions.githubusercontent.com` and a role `circuit-breaker-github-deploy` trusted by `repo:<owner>/<repo>:ref:refs/heads/main` that may assume the CDK bootstrap roles (`cdk-hnb659fds-*`); then `gh variable set DEPLOY_ENABLED --body true`. The workflow reads the domain, edge, alarm and model settings from repository variables (`gh variable list`). Pull requests run typecheck and build only.
 
 Manual alternative:
 

@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   deploy:
-    # Flip the repository variable DEPLOY_ENABLED to "true" once the circuit-breaker-github-deploy OIDC role exists (infra/scripts/github-oidc.sh).
+    # Flip the repository variable DEPLOY_ENABLED to "true" once the circuit-breaker-github-deploy OIDC role exists (see docs/DEPLOY.md).
     if: ${{ vars.DEPLOY_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     environment: production
