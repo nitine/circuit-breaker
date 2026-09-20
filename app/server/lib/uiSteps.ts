@@ -16,7 +16,7 @@ function fill(html: string, vars: Record<string, string>) { return html.replace(
 export function phaseUi(phase: Phase): NonNullable<Phase["ui"]> | null { return phase.ui ?? null; }
 
 function vars(world: World, family: Family) {
-  return { personaName: world.personaName, city: world.city, masked: world.bank.masked, balance: world.bank.balance.toLocaleString("en-IN"), caseNo: family.id === "digital-arrest" ? "CC 4471/2026" : family.id === "tech-support" ? "88213" : family.id === "fake-job" ? "DL-2026-4471" : family.id === "loan-app" ? "QR-88213" : "G7-0042", guardian: world.guardian.name };
+  return { callerName: family.caller.name, callerOrg: family.caller.org, date: new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }), personaName: world.personaName, city: world.city, masked: world.bank.masked, balance: world.bank.balance.toLocaleString("en-IN"), caseNo: family.id === "digital-arrest" ? "CC 4471/2026" : family.id === "tech-support" ? "88213" : family.id === "fake-job" ? "DL-2026-4471" : family.id === "loan-app" ? "QR-88213" : "G7-0042", guardian: world.guardian.name };
 }
 
 /** Base layer: the corpus template filled with world values. Always available. */
@@ -31,7 +31,7 @@ function escapeHtml(t: string) { return t.replace(/&/g, "&amp;").replace(/</g, "
 function stripTags(html: string) { return html.replace(/<(?!\/?(b|i|p|br|small|span|div|strong|em|ul|li)\b)[^>]*>/gi, "").replace(/\son\w+="[^"]*"/gi, ""); }
 function textNodes(html: string): string[] {
   // Candidate strings the model may rewrite: text between tags, longer than a word, not template syntax.
-  return Array.from(new Set((html.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/gi, "").match(/>([^<>{}]{12,160})</g) ?? []).map((m) => m.slice(1, -1).trim()).filter((t) => t.length >= 12)));
+  return Array.from(new Set((html.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/gi, "").match(/>([^<>{}]{12,160})</g) ?? []).map((m) => m.slice(1, -1).trim()).filter((t) => t.length >= 40 && /[a-z]{3}/.test(t))));  // sentences only: labels, refs, seals and names stay as designed
 }
 
 /** Local tier: the model rewrites the copy of the base page (a small JSON), the template stays the layout. ~150 output tokens, so a 3B model answers in seconds. */
@@ -43,7 +43,7 @@ async function generateCopy(base: UiStep, family: Family, phase: Phase, world: W
   const json = extractJson(out) as { rewrites?: Record<string, string>; extra?: string };
   let html = base.html; let changed = 0;
   for (const [from, to] of Object.entries(json.rewrites ?? {})) {
-    if (typeof to !== "string" || !to.trim() || /⚠|warning/i.test(from) || to.length > from.length * 2 + 40) continue;
+    if (typeof to !== "string" || !to.trim() || /⚠|warning/i.test(from) || to.length > from.length * 1.6 + 20 || to.length < from.length * 0.5) continue;
     if (html.includes(`>${from}<`)) { html = html.replace(`>${from}<`, `>${escapeHtml(to)}<`); changed++; }
   }
   if (typeof json.extra === "string" && json.extra.trim()) {
@@ -83,6 +83,14 @@ export async function generateStep(drillId: string, family: Family, phase: Phase
     console.warn("[ui] generation failed, base used:", (e as Error).message);
     return base;
   }
+}
+
+/** The document the caller "sent" (a notice on WhatsApp, an offer letter in Gmail): same generative layer, rendered in the device's PDF chrome. */
+export async function generateDoc(drillId: string, family: Family, world: World, device: DeviceKind, file: string): Promise<UiStep | null> {
+  const offer = family.id === "fake-job";
+  const phase: Phase = { id: `doc-${offer ? "offer" : "notice"}`, goal: offer ? "make the offer look real and time-boxed so the candidate pays the deposit" : "make the notice look official and frightening so the target stays on the line and tells nobody", tactics: [], maxTurns: 0, openers: [], resist: [], ui: { slot: "page", template: offer ? "offer-doc" : "notice-doc", url: file, actions: { close: "doc_closed", callback: "notice_callback" } } };
+  const step = await generateStep(drillId, family, phase, world, device);
+  return step ? { ...step, kind: "doc", title: file } : null;
 }
 
 /** Pre-warm generated pages for every phase that has one, in the background. */

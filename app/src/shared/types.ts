@@ -64,7 +64,7 @@ export interface Move { ts: number; tactics: Tactic[]; delta: number; quote: str
 export interface Signal { ts: number; kind: SignalKind; delta: number; source: string; index: number }
 export type Stance = "comply" | "resist" | "neutral" | "leak";
 export interface Utterance { ts: number; speaker: "judge" | "scammer" | "member"; text: string; name?: string; stance?: Stance; kind?: string; phase?: string }
-export interface UiStep { id: string; target: DeviceKind; slot: "page" | "modal"; title: string; url?: string; html: string; actions: Record<string, string> }
+export interface UiStep { id: string; target: DeviceKind; slot: "page" | "modal"; kind?: "page" | "doc"; title: string; url?: string; html: string; actions: Record<string, string> }
 export interface LadderStep { ts: number; from: LadderState; to: LadderState; index: number }
 
 export interface Debrief {

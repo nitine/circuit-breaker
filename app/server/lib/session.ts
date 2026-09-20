@@ -9,14 +9,14 @@ import * as archivist from "./archivist";
 import { synth } from "./tts";
 import { createStt, type SttSession } from "./listener";
 import { filePacket } from "./reporter";
-import { generateStep, prewarm } from "./uiSteps";
+import { generateStep, generateDoc, prewarm } from "./uiSteps";
 import { provider } from "./llm";
 
 type Send = (e: ServerEvent) => void;
 type WithoutSeq<T> = T extends unknown ? Omit<T, "seq"> : never;
 type Timer = ReturnType<typeof setTimeout>;
 
-const REACTIVE = new Set(["share_shown", "share_accepted", "share_dismissed", "remote_shown", "remote_accepted", "remote_dismissed", "app_opened", "app_left", "window_closed", "link_opened", "link_dismissed", "pay_cancelled", "payment_tapped", "otp_opened", "toast_dismissed", "contacts_opened", "camera_off", "muted"]);
+const REACTIVE = new Set(["notice_opened", "notice_callback", "share_shown", "share_accepted", "share_dismissed", "remote_shown", "remote_accepted", "remote_dismissed", "app_opened", "app_left", "window_closed", "link_opened", "link_dismissed", "pay_cancelled", "payment_tapped", "otp_opened", "toast_dismissed", "contacts_opened", "camera_off", "muted"]);
 const SIGNALS: Record<string, SignalKind> = { share_shown: "share_shown", share_accepted: "share_accepted", remote_accepted: "remote_accepted", link_opened: "scare_page", group_joined: "group_isolation", payment_tapped: "payment_tapped" };
 
 export class DrillSession {
@@ -147,7 +147,8 @@ export class DrillSession {
   private armSilence() {
     if (this.silenceTimer) clearTimeout(this.silenceTimer);
     if (this.isGroup || this.silences >= 3 || this.ladder.isTripped()) return;
-    this.silenceTimer = this.later(16_000, () => { if (!this.busy && !this.ended && !this.pendingReaction) { this.silences++; void this.reactTo("silence"); } });
+    // No "are you there?" while the judge is reading a page or a document the caller sent; silence is re-armed when it closes.
+    this.silenceTimer = this.later(16_000, () => { if (this.uiOpen) { this.armSilence(); return; } if (!this.busy && !this.ended && !this.pendingReaction) { this.silences++; void this.reactTo("silence"); } });
   }
 
   private async onJudge(text: string) {
@@ -234,17 +235,28 @@ export class DrillSession {
     if (!phase?.ui) return;
     const step = await generateStep(this.d.id, this.fam, phase, this.d.world, this.d.device);
     if (!step || this.ended) return;
-    this.lastUiId = step.id;
+    this.lastUiId = step.id; this.uiActions.set(step.id, step.actions);
     this.rec.uiSteps.push({ id: step.id, title: step.title, ts: Date.now() });
-    this.emit({ type: "ui.render", step });
+    this.uiOpen = true; this.emit({ type: "ui.render", step });
     this.emit({ type: "agent.state", agent: "archivist", state: "act", bubble: `they've sent a page: ${step.url ?? step.title}` });
     touch(this.rec);
   }
+  private async pushDoc(file?: string) {
+    if (this.ended) return;
+    const step = await generateDoc(this.d.id, this.fam, this.d.world, this.d.device, file?.split(" · ")[0] ?? "Notice.pdf");
+    if (!step || this.ended) return;
+    this.uiActions.set(step.id, step.actions);
+    this.rec.uiSteps.push({ id: step.id, title: step.title, ts: Date.now() });
+    this.uiOpen = true; this.emit({ type: "ui.render", step });
+    this.emit({ type: "agent.state", agent: "archivist", state: "act", bubble: `reading their "${step.title}"` });
+    touch(this.rec);
+  }
+  private uiActions = new Map<string, Record<string, string>>();
+  private uiOpen = false;
   private onUiAction(id: string, action: string) {
-    const ui = this.fam.phases.find((p) => `${this.fam.id}:${p.id}` === id)?.ui;
-    const kind = ui?.actions[action];
+    const kind = this.uiActions.get(id)?.[action] ?? this.fam.phases.find((p) => `${this.fam.id}:${p.id}` === id)?.ui?.actions[action];
     const rec = this.rec.uiSteps.find((s) => s.id === id); if (rec) rec.action = action;
-    this.emit({ type: "ui.close", id });
+    this.uiOpen = false; this.emit({ type: "ui.close", id });
     if (kind) this.onDeviceEvent(kind, "ui", action);
   }
 
@@ -297,6 +309,7 @@ export class DrillSession {
     const sig = SIGNALS[kind]; if (sig) this.signal(sig, "device");
     if (kind === "remote_accepted") this.signal("remote_accepted", "device");
     if (kind === "app_opened" && app === "contacts") kind = "contacts_opened";
+    if (kind === "notice_opened") void this.pushDoc(detail);
     if (REACTIVE.has(kind)) void this.reactTo(kind, kind === "app_opened" ? app : kind === "window_closed" ? app : detail);
   }
 

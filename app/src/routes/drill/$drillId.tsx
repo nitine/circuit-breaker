@@ -90,6 +90,7 @@ function DrillPage() {
     const serverStt = d.features.stt && d.features.stt !== "none" ? d.features.stt : null;
     try {
       if (serverStt) {
+        if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) { setVoice({ stt: serverStt, micOn: false, note: "the microphone needs an https page (or localhost) · type your replies here" }); return; }
         try {
           const mic = new Mic((buf) => sock.sendAudio(buf), (hot) => { if (hot) sock.send({ type: "audio.start", sampleRate: 16000, lang }); useDrill.getState().set({ hearing: hot ? Date.now() : 0 }); });
           await mic.start(); micRef.current = mic; sock.send({ type: "audio.start", sampleRate: 16000, lang });
@@ -156,7 +157,7 @@ function DrillPage() {
                 </div>
               )}
             </Room>
-            {lifted && <RoomLog rows={isLaptop ? 4 : 5} />}
+            {lifted && <RoomLog rows={14} />}
             {lifted && console_}
           </div>
         )}
