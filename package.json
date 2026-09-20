@@ -2,14 +2,14 @@
   "name": "circuit-breaker",
   "private": true,
   "version": "0.1.0",
-  "workspaces": ["web", "server"],
+  "description": "A real-time coercion detection engine for live scams against vulnerable people. Drill simulator built on AWS.",
   "scripts": {
-    "dev": "concurrently -k -n server,web -c blue,magenta \"npm run dev -w server\" \"npm run dev -w web\"",
-    "build": "npm run build -w web && npm run build -w server",
-    "start": "npm run start -w server",
-    "typecheck": "npm run typecheck -w web && npm run typecheck -w server"
-  },
-  "devDependencies": {
-    "concurrently": "^9.1.2"
+    "postinstall": "cd app && npm install",
+    "dev": "cd app && npm run dev",
+    "build": "cd app && npm run build",
+    "start": "cd app && npm run start",
+    "typecheck": "cd app && npm run typecheck",
+    "piper": "bash tools/piper/install.sh",
+    "deploy": "cd infra && npm install && npm run deploy"
   }
 }
