@@ -12,6 +12,9 @@ function template(name: string) {
   return existsSync(p) ? readFileSync(p, "utf8") : "";
 }
 function fill(html: string, vars: Record<string, string>) { return html.replace(/\{\{(\w+)\}\}/g, (_, k: string) => vars[k] ?? ""); }
+// Same pixel cursors inside the sandboxed page (relative URLs do not resolve in a srcdoc frame, so they are inlined).
+const CURSOR_CSS = `<style>html,body{cursor:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDE2IDE2IiBzaGFwZS1yZW5kZXJpbmc9ImNyaXNwRWRnZXMiPjxwYXRoIGQ9Ik0yIDFoMXYxaDF2MWgxdjFoMXYxaDF2MWgxdjFoMXYxaDF2MWgxdjFoMXYxaDF2MWgtNXYxaDF2MWgxdjJoLTF2MWgtMXYtMWgtMXYtMWgtMXYtMWgtMXYtMWgtMXYxaC0xdjFoLTF2MUgyeiIgZmlsbD0iIzFhMTQxMCIvPjxwYXRoIGQ9Ik0zIDNoMXYxaDF2MWgxdjFoMXYxaDF2MWgxdjFoMXYxaDF2MWgxdjFIOHYxaDF2MWgxdjFoLTF2MUg4di0xSDd2LTFINnYtMUg1djFINHYxSDN6IiBmaWxsPSIjZmZmZGY3Ii8+PHBhdGggZD0iTTQgNWgxdjFoMXYxaDF2MWgxdjFoMXYxSDd2MWgxdjFIN3YtMUg2di0xSDV2MUg0eiIgZmlsbD0iI2Y0ZWNkOCIvPjwvc3ZnPgo=") 4 2,auto}button,a,[data-action]{cursor:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDE2IDE2IiBzaGFwZS1yZW5kZXJpbmc9ImNyaXNwRWRnZXMiPjxwYXRoIGQ9Ik02IDFoMnYxaDF2NWgxVjZoMnYxaDF2MWgxdjVoLTF2Mkg3di0xSDZ2LTFINXYtMUg0di0xSDN2LTFIMnYtMUgxVjhoMnYxaDFWN2gxVjZoMXoiIGZpbGw9IiMxYTE0MTAiLz48cGF0aCBkPSJNNyAyaDF2NmgxVjdoMXYxaDF2MWgxdjFoMXYzaC0xdjFIOHYtMUg3di0xSDZ2LTFINXYtMUg0di0xSDNWOWgxdjFoMVY4aDFWN2gxeiIgZmlsbD0iI2ZmZmRmNyIvPjwvc3ZnPgo=") 14 2,pointer}</style>`;
+function withCursors(html: string) { return html.includes("</head>") ? html.replace("</head>", `${CURSOR_CSS}</head>`) : CURSOR_CSS + html; }
 
 export function phaseUi(phase: Phase): NonNullable<Phase["ui"]> | null { return phase.ui ?? null; }
 
@@ -22,8 +25,9 @@ function vars(world: World, family: Family) {
 /** Base layer: the corpus template filled with world values. Always available. */
 export function baseStep(family: Family, phase: Phase, world: World, device: DeviceKind): UiStep | null {
   const ui = phaseUi(phase); if (!ui) return null;
-  const html = fill(template(ui.template), vars(world, family));
-  if (!html) return null;
+  const raw = fill(template(ui.template), vars(world, family));
+  if (!raw) return null;
+  const html = withCursors(raw);
   return { id: `${family.id}:${phase.id}`, target: device, slot: ui.slot, title: ui.url || ui.template, url: ui.url, html, actions: ui.actions };
 }
 
