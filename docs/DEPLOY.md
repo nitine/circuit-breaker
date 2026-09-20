@@ -5,7 +5,7 @@ One CDK app, two stacks, one command. The result is a CloudFront URL that runs t
 | Stack | Region | What it holds |
 | --- | --- | --- |
 | `CircuitBreaker` | ap-south-1 (override with `CB_REGION`) | VPC, ECS Fargate service behind an ALB, CloudFront, DynamoDB, S3, EventBridge bus, Step Functions, the Reporter Lambda, CloudWatch dashboard |
-| `CircuitBreakerBilling` | us-east-1 (billing metrics only live there) | Two spend alarms, $60 and $80, with an optional email topic |
+| `CircuitBreakerBilling` | us-east-1 (billing metrics only live there) | Spend alarms at $60, $100 and $140, with an optional email topic |
 
 ## 1. Prerequisites
 
@@ -13,6 +13,7 @@ One CDK app, two stacks, one command. The result is a CloudFront URL that runs t
 - Node 22, Docker running (the app image and the Python Lambda are built as CDK assets).
 - AWS CLI credentials in your shell (`aws sts get-caller-identity` works).
 - Bedrock model access enabled in the console for the two models you will use (see step 2). Model access is per region.
+- A brand-new AWS account returns `AccessDeniedException: Your account is currently being verified` from Bedrock for up to two hours. The app runs in scripted mode until then and picks Bedrock up automatically, no redeploy needed.
 
 ## 2. Pick the models and region
 
@@ -22,8 +23,8 @@ Defaults, all overridable with environment variables at deploy time:
 | --- | --- | --- |
 | `CB_REGION` | `ap-south-1` | Where the stack lives |
 | `BEDROCK_REGION` | same as `CB_REGION` | Bedrock calls. Set to `us-east-1` if Mumbai has no access to your models |
-| `BEDROCK_MODEL_ID` | `anthropic.claude-sonnet-4-20250514-v1:0` | The caller (red agent) |
-| `BEDROCK_ANALYST_MODEL_ID` | `anthropic.claude-haiku-4-5-20251001-v1:0` | Analyst tagging, world builder, generated pages, Reporter |
+| `BEDROCK_MODEL_ID` | `apac.anthropic.claude-sonnet-4-20250514-v1:0` | The caller (red agent). Inference-profile ID: Mumbai has no on-demand Claude, so use the `apac.` or `global.` profile |
+| `BEDROCK_ANALYST_MODEL_ID` | `global.anthropic.claude-haiku-4-5-20251001-v1:0` | Analyst tagging, world builder, generated pages, Reporter |
 | `BEDROCK_GUARDRAIL_ID` / `BEDROCK_GUARDRAIL_VERSION` | unset | Optional Guardrail attached to the caller |
 | `ALARM_EMAIL` | unset | Billing alarm notifications |
 
@@ -82,7 +83,7 @@ Fixed cost while the stack is up is about $1.20/day: one 1 vCPU / 2 GB Fargate t
 | Polly neural, ~1,500 characters | $0.02 |
 | Lambda, Step Functions, DynamoDB, S3 | under $0.01 |
 
-So a hundred judge drills is roughly $20 plus the daily fixed cost. The billing alarms at $60 and $80 email you before anything gets close to the credit.
+So a hundred judge drills is roughly $20 plus the daily fixed cost. The billing alarms at $60, $100 and $140 email you before anything gets close to the credit; pair them with an AWS Budget (`aws budgets create-budget`) at your hard number, since alarms and budgets notify but cannot stop spend.
 
 ## 6. Updating
 
