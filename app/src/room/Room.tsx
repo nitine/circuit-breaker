@@ -28,7 +28,7 @@ export function Room({ children, camera = "none", showHud = false, interactiveHo
   const tags = useRoom((s) => s.tags);
   const phase = useRoom((s) => s.phase);
   const want = useRoom((s) => s.want);
-  const showTags = mode !== "hidden";
+  const showTags = mode === "attract" || mode === "dimmed" || mode === "live" || mode === "tripped";
   const liveRoom = mode === "live" || mode === "tripped";
 
   useEffect(() => {

@@ -1,0 +1,38 @@
+- generic [ref=f1e90]:
+  - generic [ref=f1e91]:
+    - generic [ref=f1e92]: ● LIVE DRILL
+    - generic [ref=f1e94]:
+      - generic [ref=f1e95]: ○ reconnecting
+      - generic [ref=f1e96]: local mode
+      - button "End drill" [ref=f1e97] [cursor=pointer]
+      - link "Leave" [ref=f1e98] [cursor=pointer]:
+        - /url: /
+  - generic [ref=f1e104]:
+    - generic [ref=f1e105]:
+      - generic:
+        - generic:
+          - generic:
+            - generic: LISTENER
+            - generic: hears you
+          - generic: Listener ·
+        - generic:
+          - generic:
+            - generic: ANALYST
+            - generic: scores the caller
+          - generic: Analyst ·
+        - generic:
+          - generic:
+            - generic: ARCHIVIST
+            - generic: knows the playbook
+          - generic: Archivist ·
+        - generic:
+          - generic:
+            - generic: GUARDIAN
+            - generic: holds the breaker
+          - generic: Guardian ·
+        - generic:
+          - generic:
+            - generic: REPORTER
+            - generic: files the case
+          - generic: Reporter ·
+    - generic [ref=f1e107]: Opening the case file…

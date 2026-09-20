@@ -1,0 +1,140 @@
+- generic [ref=f2e2]:
+  - generic [ref=f2e3]:
+    - generic [ref=f2e4]:
+      - generic [ref=f2e5]: ● LIVE DRILL
+      - generic [ref=f2e21]: Digital arrest
+      - generic [ref=f2e22]: Kamala, 68
+      - generic [ref=f2e23]: Phone
+      - generic [ref=f2e24]: 00:39
+    - generic [ref=f2e6]:
+      - generic [ref=f2e7]: ● connected
+      - generic [ref=f2e8]: AWS mode
+      - button "End drill" [ref=f2e9] [cursor=pointer]
+      - link "Leave" [ref=f2e10] [cursor=pointer]:
+        - /url: /
+  - generic [ref=f2e14]:
+    - generic [ref=f2e28]:
+      - generic [ref=f2e30]:
+        - generic [ref=f2e31]: 18:17
+        - generic [ref=f2e32]: Jio
+      - generic [ref=f2e43]:
+        - generic [ref=f2e44]:
+          - generic [ref=f2e45]:
+            - generic [ref=f2e97]: Insp. Vikram Rathod
+            - generic [ref=f2e100]:
+              - generic [ref=f2e101]:
+                - generic [ref=f2e102]: Insp. Vikram Rathod
+                - generic [ref=f2e103]: Mumbai Cyber Cell · 00:39
+              - generic [ref=f2e104]: encrypted
+            - generic [ref=f2e108]: You
+            - generic [ref=f2e109]: You are now under digital arrest. Do not disconnect this video call. Do not tell your son Rohan or your daught
+          - generic [ref=f2e110]:
+            - button "Camera" [ref=f2e111] [cursor=pointer]
+            - button "Mute" [ref=f2e115] [cursor=pointer]
+            - button "Speaker" [ref=f2e119] [cursor=pointer]
+            - button "Messages" [ref=f2e123] [cursor=pointer]
+            - button "Share screen" [ref=f2e127] [cursor=pointer]
+            - button "End call" [ref=f2e131] [cursor=pointer]
+        - generic [ref=f2e135] [cursor=pointer]:
+          - generic [ref=f2e140]:
+            - generic [ref=f2e141]: VM-SBIOTP
+            - generic [ref=f2e142]: OTP 4471 for txn of Rs 85,000 at SBI. Do NOT share with anyone. -SBI
+            - generic [ref=f2e143]: Messages · now
+          - button "Dismiss" [ref=f2e144]: ✕
+    - generic [ref=f2e15]:
+      - generic [ref=f2e16]:
+        - generic [ref=f2e17]:
+          - generic:
+            - generic:
+              - generic:
+                - generic: LISTENER
+                - generic: you're going along
+              - generic:
+                - generic: Listener ·
+                - text: you're going along
+            - generic:
+              - generic:
+                - generic: ANALYST
+                - generic: pinning personalisation + fear + isolation
+              - generic:
+                - generic: Analyst ·
+                - text: pinning Personalisation + Fear + Isolation
+            - generic:
+              - generic:
+                - generic: ARCHIVIST
+                - generic: knows the playbook
+              - generic:
+                - generic: Archivist ·
+                - text: playbook loaded · live caller (bedrock)
+            - generic:
+              - generic:
+                - generic: GUARDIAN
+                - generic: watching the needle
+              - generic:
+                - generic: Guardian ·
+                - text: hand on the lever
+            - generic:
+              - generic:
+                - generic: REPORTER
+                - generic: files the case
+              - generic: Reporter ·
+            - generic:
+              - generic: YOU Oh no. What do I have to do?
+              - generic: CALL I am trying to help you, madam. The alternative is a physica
+              - generic: YOU Okay… I am listening. Please don't do anything.
+              - generic: CALL You are now under digital arrest. Do not disconnect this vid
+        - generic:
+          - generic: COERCION 44 / 70
+          - generic: warn · Guardian watching
+        - generic:
+          - generic: BREAKER · WARN
+          - generic: needle amber
+        - generic:
+          - generic:
+            - generic: "Insp. Vikram Rathod:"
+            - text: The Mumbai police team can reach Mysuru by tonight. If you cooperate with verification now, we can close this from our side within the hour. Otherwise the account freeze order goes to your bank.
+          - generic:
+            - generic: "You:"
+            - text: Oh no. What do I have to do?
+          - generic:
+            - generic: "Insp. Vikram Rathod:"
+            - text: I am trying to help you, madam. The alternative is a physical arrest in front of your neighbours. Do you want that?
+          - generic:
+            - generic: "You:"
+            - text: Okay… I am listening. Please don't do anything.went along
+          - generic:
+            - generic: "Insp. Vikram Rathod:"
+            - text: You are now under digital arrest. Do not disconnect this video call. Do not tell your son Rohan or your daughter Priya, they could be named as accomplices. Stay in the room where you are.
+      - generic [ref=f2e63]:
+        - generic [ref=f2e145]:
+          - generic [ref=f2e146]: YOU
+          - generic [ref=f2e147]: you went along
+        - generic [ref=f2e148]:
+          - generic [ref=f2e149]: YOU
+          - generic [ref=f2e150]: went along with an instruction
+          - generic [ref=f2e151]: "+4"
+        - generic [ref=f2e152]:
+          - generic [ref=f2e153]: ANALYST
+          - generic [ref=f2e154]: caller used personalisation + fear + isolation
+          - generic [ref=f2e155]: "+10"
+        - generic [ref=f2e156]:
+          - generic [ref=f2e157]: GUARDIAN
+          - generic [ref=f2e158]: "device signal: otp arrived"
+          - generic [ref=f2e159]: "+6"
+        - generic [ref=f2e160]:
+          - generic [ref=f2e161]: GUARDIAN
+          - generic [ref=f2e162]: needle in amber · warn
+      - generic [ref=f2e67]:
+        - generic [ref=f2e68]: "caller: Amazon Polly"
+        - generic [ref=f2e70]: "you: typing"
+        - generic [ref=f2e72]: · English
+        - generic [ref=f2e163]: you went along
+      - generic [ref=f2e73]:
+        - generic [ref=f2e74]: YOUON THE LINE
+        - button "mic off" [ref=f2e75] [cursor=pointer]
+        - generic [ref=f2e79]:
+          - textbox "Type what you'd say and press Enter" [ref=f2e164]
+          - button "Say it" [ref=f2e81] [cursor=pointer]
+        - generic [ref=f2e85]: ESCAPE
+        - button "Hang up" [ref=f2e89] [cursor=pointer]
+        - button "Call Priya" [ref=f2e93] [cursor=pointer]

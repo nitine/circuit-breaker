@@ -16,6 +16,7 @@ export const Route = createRootRoute({
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=VT323&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Noto+Sans+Kannada:wght@700&family=Noto+Sans+Devanagari:wght@400;700&display=swap" },
       { rel: "stylesheet", href: globalCss },
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
     ],
   }),
   component: RootComponent,

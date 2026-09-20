@@ -1,0 +1,69 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e5]:
+      - generic:
+        - generic: Listener ·
+        - generic: Analyst ·
+        - generic:
+          - generic:
+            - generic: ARCHIVIST
+            - generic: knows the playbook
+          - generic: Archivist ·
+        - generic:
+          - generic:
+            - generic: GUARDIAN
+            - generic: holds the breaker
+          - generic: Guardian ·
+        - generic:
+          - generic:
+            - generic: REPORTER
+            - generic: files the case
+          - generic: Reporter ·
+    - generic [ref=e7]:
+      - link "CIRCUIT BREAKER" [ref=e8] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e11]:
+        - link "How it works" [ref=e12] [cursor=pointer]:
+          - /url: /how
+        - link "GitHub" [ref=e13] [cursor=pointer]:
+          - /url: https://github.com/nitine/circuit-breaker
+        - link "Start a drill" [ref=e14] [cursor=pointer]:
+          - /url: /drill/new
+    - generic [ref=e15]:
+      - generic [ref=e16]: A LIVE SCAM DRILL · BUILT ON AWS
+      - heading "Get scammed. Safely." [level=1] [ref=e17]: Get scammed.Safely.
+      - paragraph [ref=e18]: "A real AI scammer calls you. Five agents in this room listen for coercion and trip the breaker before you lose anything. Built for the people scammers target: elders, students, migrant workers, anyone alone with a phone."
+      - generic [ref=e19]:
+        - link "Start the drill" [ref=e20] [cursor=pointer]:
+          - /url: /drill/new
+        - link "How the room works" [ref=e24] [cursor=pointer]:
+          - /url: /how
+      - generic [ref=e25]: No real money. No recordings kept. Fictional scenarios only. Not affiliated with any app, bank or agency shown.
+  - generic [ref=e26]:
+    - generic [ref=e27]:
+      - heading "Everyone watches the number. Nobody watches the call." [level=2] [ref=e28]
+      - paragraph [ref=e29]: Airtel and Jio score callers at the network layer. Truecaller scores reputation. DoT's Fraud Risk Indicator scores numbers for banks. None of them hears the conversation, and one in three victims call the scammer back themselves.
+      - paragraph [ref=e30]: Circuit Breaker scores the conversation. A live transcript plus what's happening on the device becomes one number, the coercion index. At seventy, the breaker trips and someone you trust is put between you and the caller.
+      - paragraph [ref=e31]: Judges can't experience a real scam, so this site gives you one. The scammer is synthetic. The engine is not.
+      - generic [ref=e32]:
+        - generic [ref=e33]:
+          - generic [ref=e34]: LISTENER
+          - text: Amazon Transcribe streaming
+        - generic [ref=e35]:
+          - generic [ref=e36]: ANALYST
+          - text: Bedrock + Guardrails
+        - generic [ref=e37]:
+          - generic [ref=e38]: ARCHIVIST
+          - text: Playbook corpus
+        - generic [ref=e39]:
+          - generic [ref=e40]: GUARDIAN
+          - text: The breaker · Polly
+        - generic [ref=e41]:
+          - generic [ref=e42]: REPORTER
+          - text: Strands on Lambda · S3
+    - blockquote [ref=e43]:
+      - text: “A time-based kill switch does not address the underlying coercion; it merely interrupts the technical session.”
+      - generic [ref=e44]: WhatsApp, to the Supreme Court of India, in the digital-arrest suo motu case, 2026. We built the thing that addresses the coercion.
+  - contentinfo [ref=e45]:
+    - generic [ref=e46]: Circuit Breaker · a drill simulator for the WeMakeDevs × AWS First Commit hackathon
+    - generic [ref=e47]: Apache-2.0
