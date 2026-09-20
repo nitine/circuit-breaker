@@ -1,0 +1,49 @@
+name: deploy
+
+# Every push to main deploys the CircuitBreaker stack to ap-south-1 through an OIDC role (no AWS keys in GitHub).
+# Domain, edge and model settings come from repository variables so the workflow file stays generic.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency: { group: deploy-production, cancel-in-progress: false }
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CDK_DEFAULT_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+      CB_REGION: ${{ vars.CB_REGION || 'ap-south-1' }}
+      CB_EDGE: ${{ vars.CB_EDGE || '0' }}
+      CB_DOMAIN: ${{ vars.CB_DOMAIN }}
+      CB_ZONE_ID: ${{ vars.CB_ZONE_ID }}
+      ALARM_EMAIL: ${{ vars.ALARM_EMAIL }}
+      LLM_BASE_URL: ${{ vars.LLM_BASE_URL }}
+      LLM_MODEL: ${{ vars.LLM_MODEL }}
+      LLM_ANALYST_MODEL: ${{ vars.LLM_ANALYST_MODEL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/circuit-breaker-github-deploy
+          aws-region: ${{ vars.CB_REGION || 'ap-south-1' }}
+      - run: npm ci --no-audit --no-fund
+        working-directory: infra
+      - name: cdk deploy
+        run: npx cdk deploy CircuitBreaker --require-approval never --outputs-file outputs.json
+        working-directory: infra
+      - name: smoke test
+        run: |
+          URL=$(python3 -c "import json; print(json.load(open('infra/outputs.json'))['CircuitBreaker']['Url'])")
+          echo "deployed: $URL"
+          for i in $(seq 1 30); do curl -sf -m 10 "$URL/api/health" && break; sleep 10; done
+          curl -sf -m 10 "$URL/api/catalog" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['mode'], d['features'])"
