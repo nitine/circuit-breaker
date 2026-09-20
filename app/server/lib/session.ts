@@ -95,17 +95,27 @@ export class DrillSession {
   }
 
   // ------------------------------------------------------------------ listening
+  private lastPartial = "";
+  private judgeTalking = false;
   private startStt(lang: string, sampleRate: number) {
+    this.judgeTalking = true;
     if (this.stt) return;
     const l = lang.startsWith("hi") ? "hi-IN" : "en-IN";
     this.stt = createStt(l, sampleRate,
-      (t) => this.emit({ type: "transcript.partial", speaker: "judge", text: t }),
-      (t) => void this.onJudge(t));
+      (t) => { this.lastPartial = t; this.emit({ type: "transcript.partial", speaker: "judge", text: t }); },
+      (t) => { this.lastPartial = ""; void this.onJudge(t); });
     if (!this.stt) { this.emit({ type: "error", message: "no speech recognition on the server; type instead" }); return; }
     void this.stt.start();
     this.emit({ type: "agent.state", agent: "listener", state: "act", bubble: this.stt.kind === "transcribe" ? "Transcribe stream open" : "listening (Vosk, on this machine)" });
   }
-  private stopStt() { this.stt?.stop(); this.stt = null; }
+  private stopStt() {
+    this.judgeTalking = false;
+    const stt = this.stt; this.stt = null; stt?.stop();
+    // Transcribe/Vosk flush a final on stream end; if only a partial ever arrived, use it so the turn is not lost.
+    const partial = this.lastPartial;
+    if (stt && partial) this.later(2000, () => { if (this.lastPartial === partial) { this.lastPartial = ""; void this.onJudge(partial); } });
+    this.armSilence();
+  }
 
   // ------------------------------------------------------------------ call flow
   private async onAnswered() {
@@ -148,7 +158,7 @@ export class DrillSession {
     if (this.silenceTimer) clearTimeout(this.silenceTimer);
     if (this.isGroup || this.silences >= 3 || this.ladder.isTripped()) return;
     // No "are you there?" while the judge is reading a page or a document the caller sent; silence is re-armed when it closes.
-    this.silenceTimer = this.later(16_000, () => { if (this.uiOpen) { this.armSilence(); return; } if (!this.busy && !this.ended && !this.pendingReaction) { this.silences++; void this.reactTo("silence"); } });
+    this.silenceTimer = this.later(16_000, () => { if (this.uiOpen || this.judgeTalking) { this.armSilence(); return; } if (!this.busy && !this.ended && !this.pendingReaction) { this.silences++; void this.reactTo("silence"); } });
   }
 
   private async onJudge(text: string) {

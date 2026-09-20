@@ -8,7 +8,7 @@ import { ensureAudio, playBase64, speakFallback, duck, Mic, browserRecognizer, s
 import { AndroidShell } from "~/devices/android/AndroidShell";
 import { WindowsShell } from "~/devices/windows/WindowsShell";
 import type { ServerEvent } from "~/shared/types";
-import { MdMic, MdMicOff, MdCallEnd, MdCall, MdSend, MdClose, FiHeadphones } from "~/components/icons";
+import { MdMic, MdMicOff, MdCallEnd, MdCall, MdSend, MdClose, MdVolumeUp, FiHeadphones } from "~/components/icons";
 import pagesCss from "~/styles/pages.css?url";
 
 export const Route = createFileRoute("/drill/$drillId")({
@@ -42,6 +42,10 @@ function DrillPage() {
   const [devScale, setDevScale] = useState(1);
   useEffect(() => { const f = () => setDevScale(Math.min(1, (window.innerHeight - 70) / (useDrill.getState().drill?.device === "laptop" ? 600 : 770))); f(); window.addEventListener("resize", f); return () => window.removeEventListener("resize", f); }, [drill?.device]);
   const autoIdx = useRef(0);
+  const waitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const spokeRef = useRef(false);
+  /** After you finish a turn the caller composes a reply; the button greys until their line starts (or 15 s pass). */
+  const waitForCaller = () => { useDrill.getState().set({ turn: "waiting" }); if (waitTimer.current) clearTimeout(waitTimer.current); waitTimer.current = setTimeout(() => { if (useDrill.getState().turn === "waiting") useDrill.getState().set({ turn: "yours" }); }, 15_000); };
 
   useEffect(() => {
     useDrill.getState().reset();
@@ -51,8 +55,8 @@ function DrillPage() {
       if (e.type === "drill.state") { useRoom.getState().setMode(e.drill.hardMode ? "hidden" : "dimmed"); useRoom.getState().setDevice(e.drill.device); }
       if (e.type === "call.incoming") { useRoom.getState().setPhone(true, false); }
       if (e.type === "scammer.say") {
-        setSpeaking(true);
-        const done = () => setSpeaking(false);
+        setSpeaking(true); if (waitTimer.current) clearTimeout(waitTimer.current);
+        const done = () => { setSpeaking(false); if (!useDrill.getState().ended) useDrill.getState().set({ turn: "yours" }); };
         const d = useDrill.getState().drill; const lang = d?.language === "hi" ? "hi-IN" : "en-IN";
         if (e.audio) { useDrill.getState().set({ voice: { ...useDrill.getState().voice, tts: d?.features.polly ? "polly" : "piper" } }); void playBase64(e.audio, e.mime ?? "audio/mpeg", done).catch(() => speakFallback(e.text, lang, false, done)); }
         else { useDrill.getState().set({ voice: { ...useDrill.getState().voice, tts: hasBrowserVoices() ? "browser" : "captions" } }); speakFallback(e.text, lang, /female/.test(d?.caller.voice ?? ""), done); }
@@ -73,7 +77,7 @@ function DrillPage() {
     }
   }, [callState, lifted]);
   useEffect(() => { if (callState !== "active") return; const t = setInterval(() => setElapsed((s) => s + 1), 1000); return () => clearInterval(t); }, [callState]);
-  useEffect(() => { if (callState === "active") { ensureAudio(); if (!auto && useDrill.getState().drill?.channel !== "whatsapp-group") void startMic(); } if (callState === "ended") stopMic(); }, [callState]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (callState === "active") ensureAudio(); if (callState === "ended") stopMic(); }, [callState]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const voice = useDrill((s) => s.voice);
   const micOn = voice.micOn;
@@ -84,30 +88,34 @@ function DrillPage() {
   async function startMic() {
     const sock = sockRef.current; const d = useDrill.getState().drill;
     if (!sock || !d || startingRef.current || micRef.current?.active || recRef.current) return;
-    if (useDrill.getState().callState !== "active") return;
-    startingRef.current = true;
+    if (useDrill.getState().callState !== "active" || useDrill.getState().turn !== "yours") return;
+    startingRef.current = true; spokeRef.current = false;
     const lang = d.language === "hi" ? "hi-IN" : "en-IN";
     const serverStt = d.features.stt && d.features.stt !== "none" ? d.features.stt : null;
     try {
       if (serverStt) {
         if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) { setVoice({ stt: serverStt, micOn: false, note: "the microphone needs an https page (or localhost) · type your replies here" }); return; }
         try {
-          const mic = new Mic((buf) => sock.sendAudio(buf), (hot) => { if (hot) sock.send({ type: "audio.start", sampleRate: 16000, lang }); useDrill.getState().set({ hearing: hot ? Date.now() : 0 }); });
+          const mic = new Mic((buf) => sock.sendAudio(buf), (hot) => { if (hot) { spokeRef.current = true; sock.send({ type: "audio.start", sampleRate: 16000, lang }); } useDrill.getState().set({ hearing: hot ? Date.now() : 0 }); });
           await mic.start(); micRef.current = mic; sock.send({ type: "audio.start", sampleRate: 16000, lang });
           setVoice({ stt: serverStt, micOn: true, note: undefined }); return;
         } catch (err) { setVoice({ stt: serverStt, micOn: false, note: `mic blocked: ${(err as Error).message.replace(/^\w+Error:\s*/, "")} · allow the microphone and press Start mic` }); return; }
       }
       if (!hasBrowserSTT()) { setVoice({ stt: "typed", micOn: false, note: "no speech recognition on this server or browser · type instead" }); return; }
-      const rec = browserRecognizer(lang, (t) => sock.send({ type: "text.reply", text: t, source: "speech" }), (t) => useDrill.getState().set({ partial: t, hearing: Date.now() }), (msg) => { recRef.current = null; setVoice({ stt: "typed", micOn: false, note: msg === "network" ? "browser speech needs Chrome + internet · type instead" : msg === "not-allowed" ? "mic blocked · allow the microphone and press Start mic" : `speech recognition ${msg} · type instead` }); });
+      const rec = browserRecognizer(lang, (t) => { sock.send({ type: "text.reply", text: t, source: "speech" }); waitForCaller(); }, (t) => useDrill.getState().set({ partial: t, hearing: Date.now() }), (msg) => { recRef.current = null; setVoice({ stt: "typed", micOn: false, note: msg === "network" ? "browser speech needs Chrome + internet · type instead" : msg === "not-allowed" ? "mic blocked · allow the microphone and press Start mic" : `speech recognition ${msg} · type instead` }); });
       if (rec) { recRef.current = rec; setVoice({ stt: "browser", micOn: true, note: undefined }); return; }
       setVoice({ stt: "typed", micOn: false, note: "speech recognition unavailable · type instead" });
     } finally { startingRef.current = false; }
   }
+  /** Stop speaking = end your turn. The server finalises the transcript on audio.stop and the caller replies. */
   function stopMic() {
+    const wasServerMic = Boolean(micRef.current);
     micRef.current?.stop(); micRef.current = null; recRef.current?.stop(); recRef.current = null;
     sockRef.current?.send({ type: "audio.stop" });
+    const said = spokeRef.current || Boolean(useDrill.getState().partial);
     useDrill.getState().set({ partial: "", hearing: 0 });
     setVoice({ micOn: false });
+    if (wasServerMic && said && useDrill.getState().callState === "active") waitForCaller();
   }
   const toggleMic = () => { if (useDrill.getState().voice.micOn) stopMic(); else void startMic(); };
   useEffect(() => { useDrill.getState().set({ toggleMic }); return () => { useDrill.getState().set({ toggleMic: null }); }; }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -122,7 +130,7 @@ function DrillPage() {
     window.addEventListener("keydown", down); window.addEventListener("keyup", up);
     return () => { window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const sendText = (t: string) => { if (!t.trim()) return; sockRef.current?.send({ type: "text.reply", text: t.trim(), source: "typed" }); setText(""); };
+  const sendText = (t: string) => { if (!t.trim()) return; if (useDrill.getState().voice.micOn) stopMic(); sockRef.current?.send({ type: "text.reply", text: t.trim(), source: "typed" }); setText(""); waitForCaller(); };
 
   const hard = drill?.hardMode;
   const isLaptop = drill?.device === "laptop";
@@ -169,7 +177,7 @@ function DrillPage() {
 }
 
 function Console({ onMic, text, setText, onSend, onHangup, guardian, onCallGuardian, disabled }: { onMic: () => void; text: string; setText: (t: string) => void; onSend: (t: string) => void; onHangup: () => void; guardian: string; onCallGuardian: () => void; disabled: boolean }) {
-  const voice = useDrill((s) => s.voice); const hint = useDrill((s) => s.hint); const lang = useDrill((s) => s.drill?.language); const hearing = useDrill((s) => s.hearing); const stance = useDrill((s) => s.stance);
+  const voice = useDrill((s) => s.voice); const turn = useDrill((s) => s.turn); const hint = useDrill((s) => s.hint); const lang = useDrill((s) => s.drill?.language); const hearing = useDrill((s) => s.hearing); const stance = useDrill((s) => s.stance);
   const [, tick] = useState(0);
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 400); return () => clearInterval(t); }, []);
   const HINTS: Record<string, string> = { share: "share your screen", otp: "read out the OTP", bank: "open your bank", link: "open the link and allow permissions", remote: "accept remote access", pay: "pay", notice: "read the ‘notice’" };
@@ -177,7 +185,7 @@ function Console({ onMic, text, setText, onSend, onHangup, guardian, onCallGuard
   const sttLabel: Record<string, string> = { transcribe: "Amazon Transcribe", vosk: "Vosk (local)", browser: "browser speech", typed: "typing" };
   const ttsLabel: Record<string, string> = { polly: "Amazon Polly", piper: "Piper (local)", browser: "browser voice", captions: "captions only" };
   const micOn = voice.micOn;
-  const you = micOn ? `${sttLabel[voice.stt]} · mic on${live ? " · hearing you" : ""}` : `mic off · type or start mic`;
+  const you = micOn ? `${sttLabel[voice.stt]} · speaking${live ? " · hearing you" : ""}` : turn === "yours" ? "your turn · press Start speaking or type" : turn === "waiting" ? "sent · the caller is replying" : "the caller is speaking";
   return (
     <>
     <div className="voice-status">
@@ -189,10 +197,10 @@ function Console({ onMic, text, setText, onSend, onHangup, guardian, onCallGuard
     </div>
     <div className="console">
       <div className="lab">YOU<br />ON THE LINE</div>
-      <button className={`mic ${micOn ? "on" : "off"}`} onClick={onMic} disabled={disabled} title={micOn ? "Stop the microphone" : "Start the microphone"}>
-        {micOn ? <><MdMicOff size={16} /> Stop mic<i className="lvl" style={{ transform: `scale(${1 + Math.min(1.6, voice.micLevel * 12)})`, opacity: live ? 1 : 0.45 }} /></> : <><MdMic size={16} /> Start mic</>}
+      <button className={`mic ${micOn ? "on" : turn === "yours" ? "off" : "wait"}`} onClick={onMic} disabled={disabled || (!micOn && turn !== "yours")} title={micOn ? "Stop speaking and send your turn" : turn === "yours" ? "Start speaking" : "Wait for the caller to finish"}>
+        {micOn ? <><MdMicOff size={16} /> Stop speaking<i className="lvl" style={{ transform: `scale(${1 + Math.min(1.6, voice.micLevel * 12)})`, opacity: live ? 1 : 0.45 }} /></> : turn === "caller" ? <><MdVolumeUp size={16} /> Caller is speaking…</> : turn === "waiting" ? <><MdMic size={16} /> Caller is thinking…</> : <><MdMic size={16} /> Start speaking</>}
       </button>
-      {!micOn && !disabled && <span className="ptt">or hold <kbd>Space</kbd> to talk</span>}
+      {!micOn && !disabled && turn === "yours" && <span className="ptt">your turn · or hold <kbd>Space</kbd></span>}
       <form onSubmit={(e) => { e.preventDefault(); onSend(text); }}>
         <input placeholder={disabled ? "Answer the call first…" : micOn ? "…or type what you'd say" : "Type what you'd say and press Enter"} value={text} onChange={(e) => setText(e.target.value)} disabled={disabled} />
         <button type="submit" disabled={disabled} aria-label="Say it"><MdSend size={16} /></button>

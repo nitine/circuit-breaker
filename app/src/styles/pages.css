@@ -221,3 +221,6 @@
 .drill .roomcol { height: 100%; }
 .drill .roomcol .room-log { flex: 1 1 auto; min-height: 64px; justify-content: flex-start; overflow: hidden; }
 .drill .roomcol .voice-status, .drill .roomcol .console { flex: none; }
+
+.drill .console button.mic.wait { background: #2a2622; color: #8a8378; border: 1px solid #3a3530; cursor: not-allowed; }
+.drill .console button.mic.off { background: var(--green); color: #0b0a08; }
