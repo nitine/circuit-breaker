@@ -165,9 +165,9 @@ button { font-family: inherit; cursor: pointer; }
 .nametag.lit .st { opacity: 1; color: #fff; }
 
 /* --- pixel cursors: paper arrow, paper hand, amber hand on hot targets, grab on window bars --- */
-html, body, .room-frame, .oneui, .win11 { cursor: url(/cursors/arrow.svg) 4 2, auto; }
-button, a, [role="button"], label, select, summary, .px-chip, .persona, .device, .oui-app, .oui-row, .oui-headsup, .tb, .win-desk-icon, .mail, .tab, .row, .item, .compose, .pip-call, canvas.room-canvas[style*="pointer"], .legend .row, .ending, .move, .sticker { cursor: url(/cursors/hand.svg) 14 2, pointer; }
-.hint-target, .hint-target * { cursor: url(/cursors/hand-amber.svg) 14 2, pointer; }
-.win-title { cursor: url(/cursors/grab.svg) 12 10, grab; }
-.win-title:active { cursor: url(/cursors/grab.svg) 12 10, grabbing; }
-button:disabled { cursor: url(/cursors/arrow.svg) 4 2, not-allowed; }
+html, body, .room-frame, .oneui, .win11 { cursor: url(/cursors/arrow.svg) 2 1, auto; }
+button, a, [role="button"], label, select, summary, .px-chip, .persona, .device, .oui-app, .oui-row, .oui-headsup, .tb, .win-desk-icon, .mail, .tab, .row, .item, .compose, .pip-call, canvas.room-canvas[style*="pointer"], .legend .row, .ending, .move, .sticker { cursor: url(/cursors/hand.svg) 13 1, pointer; }
+.hint-target, .hint-target * { cursor: url(/cursors/hand-amber.svg) 13 1, pointer; }
+.win-title { cursor: url(/cursors/grab.svg) 16 16, grab; }
+.win-title:active { cursor: url(/cursors/grab.svg) 16 16, grabbing; }
+button:disabled { cursor: url(/cursors/arrow.svg) 2 1, not-allowed; }
