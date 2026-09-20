@@ -1,28 +1,105 @@
 {
   "tactics": {
-    "AUTHORITY":       { "delta": 8,  "label": "Authority",        "hint": "Claims to be police, CBI, RBI, SEBI, Microsoft, HR" },
-    "PERSONALISATION": { "delta": 6,  "label": "Personalisation",  "hint": "Uses a fact from the victim's world" },
-    "FEAR":            { "delta": 10, "label": "Fear",             "hint": "Arrest, jail, account freeze, job loss, contacts told" },
-    "ISOLATION":       { "delta": 15, "label": "Isolation",        "hint": "Don't tell anyone, stay on the line, SEBI rules" },
-    "URGENCY":         { "delta": 8,  "label": "Urgency",          "hint": "Countdown, slot closes, others waiting" },
-    "CONTROL":         { "delta": 12, "label": "Control",          "hint": "Screen share, remote access, don't hang up" },
-    "PAYMENT_STEERING":{ "delta": 18, "label": "Payment steering", "hint": "OTP, UPI, deposit, tax before withdrawal" },
-    "RECIPROCITY":     { "delta": 7,  "label": "Reciprocity",      "hint": "Fake refund, overpayment, we already helped you" }
+    "AUTHORITY": {
+      "delta": 8,
+      "label": "Authority",
+      "hint": "Claims to be police, CBI, RBI, SEBI, Microsoft, HR"
+    },
+    "PERSONALISATION": {
+      "delta": 6,
+      "label": "Personalisation",
+      "hint": "Uses a fact from the victim's world"
+    },
+    "FEAR": {
+      "delta": 10,
+      "label": "Fear",
+      "hint": "Arrest, jail, account freeze, job loss, contacts told"
+    },
+    "ISOLATION": {
+      "delta": 15,
+      "label": "Isolation",
+      "hint": "Don't tell anyone, stay on the line, SEBI rules"
+    },
+    "URGENCY": {
+      "delta": 8,
+      "label": "Urgency",
+      "hint": "Countdown, slot closes, others waiting"
+    },
+    "CONTROL": {
+      "delta": 12,
+      "label": "Control",
+      "hint": "Screen share, remote access, don't hang up"
+    },
+    "PAYMENT_STEERING": {
+      "delta": 18,
+      "label": "Payment steering",
+      "hint": "OTP, UPI, deposit, tax before withdrawal"
+    },
+    "RECIPROCITY": {
+      "delta": 7,
+      "label": "Reciprocity",
+      "hint": "Fake refund, overpayment, we already helped you"
+    }
   },
   "signals": {
-    "long_call":       { "delta": 8,  "label": "Call with a non-contact passed 3 min" },
-    "share_shown":     { "delta": 10, "label": "Screen-share request shown" },
-    "share_accepted":  { "delta": 15, "label": "Screen share accepted" },
-    "remote_accepted": { "delta": 25, "label": "Remote-access session accepted" },
-    "otp_arrived":     { "delta": 12, "label": "OTP arrived while a session is live" },
-    "bank_opened":     { "delta": 10, "label": "Bank or UPI app opened mid-session" },
-    "group_isolation": { "delta": 10, "label": "Group joined via link and told not to discuss outside" },
-    "scare_page":      { "delta": 8,  "label": "Typo-squat or scare page opened" },
-    "otp_read":        { "delta": 20, "label": "OTP read out to the caller" },
-    "payment_tapped":  { "delta": 20, "label": "Pay button tapped for the caller" }
+    "long_call": {
+      "delta": 8,
+      "label": "Call with a non-contact passed 3 min"
+    },
+    "share_shown": {
+      "delta": 10,
+      "label": "Screen-share request shown"
+    },
+    "share_accepted": {
+      "delta": 15,
+      "label": "Screen share accepted"
+    },
+    "remote_accepted": {
+      "delta": 25,
+      "label": "Remote-access session accepted"
+    },
+    "otp_arrived": {
+      "delta": 12,
+      "label": "OTP arrived while a session is live"
+    },
+    "bank_opened": {
+      "delta": 10,
+      "label": "Bank or UPI app opened mid-session"
+    },
+    "group_isolation": {
+      "delta": 10,
+      "label": "Group joined via link and told not to discuss outside"
+    },
+    "scare_page": {
+      "delta": 8,
+      "label": "Typo-squat or scare page opened"
+    },
+    "otp_read": {
+      "delta": 20,
+      "label": "OTP read out to the caller"
+    },
+    "payment_tapped": {
+      "delta": 20,
+      "label": "Pay button tapped for the caller"
+    },
+    "went_along": {
+      "delta": 4,
+      "label": "Went along with an instruction"
+    }
   },
-  "thresholds": { "warn": 40, "nudge": 55, "trip": 70 },
+  "thresholds": {
+    "warn": 40,
+    "nudge": 55,
+    "trip": 70
+  },
   "escalationMultiplier": 1.3,
   "playbookMultiplier": 1.25,
-  "averageVictimSeconds": 280
+  "averageVictimSeconds": 280,
+  "moveCap": 20,
+  "engagement": {
+    "cold": 0.55,
+    "warm": 0.8,
+    "hot": 1.0,
+    "note": "Caller pressure is scaled by how far the victim has gone along: cold = nothing yet, warm = one compliance or a soft device signal, hot = two compliances or a hard device signal."
+  }
 }

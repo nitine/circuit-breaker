@@ -68,9 +68,11 @@ export function Room({ children, camera = "none", showHud = false, interactiveHo
           {(Object.keys(sim.agents) as AgentName[]).map((a) => {
             const b = bubbles[a]; const ag = sim.agents[a];
             const show = b && b.until > now && ag.x >= hideBubblesLeftOf;
+            const fw = frameRef.current?.clientWidth ?? W * scale; const half = 105;
+            const left = Math.max(half + 6, Math.min(fw - half - 6, ag.x * scale));
             return (
-              <div key={a} className={`bubble ${show ? "show" : ""} ${b?.hot ? "hot" : ""}`} style={{ left: ag.x * scale, top: (ag.y - SCENE.spriteHeight - 8) * scale, fontSize: Math.max(11, 26 * scale) }}>
-                <span style={{ opacity: .6, fontSize: "0.8em" }}>{AGENT_LABEL[a]} · </span>{b?.text}
+              <div key={a} className={`bubble ${show ? "show" : ""}`} style={{ left, top: (ag.y - SCENE.spriteHeight * SCENE.depth(ag.y) - 6) * scale, fontSize: Math.max(11, Math.min(14, 18 * scale)) }}>
+                <span className="who">{AGENT_LABEL[a]} · </span>{b?.text}
               </div>
             );
           })}

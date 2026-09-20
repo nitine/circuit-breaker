@@ -136,6 +136,15 @@
         "resist": [
           "यह RBI का स्टैंडर्ड वेरिफिकेशन है, मैडम। मुझे आपका पासवर्ड नहीं दिखता, सिर्फ बैलेंस। स्क्रीन शेयर कीजिए।"
         ]
+      },
+      "ui": {
+        "slot": "page",
+        "template": "rbi-verification",
+        "url": "rbi-verify.in/secure/kyc",
+        "actions": {
+          "submit": "share_accepted",
+          "close": "link_dismissed"
+        }
       }
     },
     {

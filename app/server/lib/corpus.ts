@@ -11,6 +11,7 @@ export interface Phase {
   id: string; goal: string; tactics: Tactic[]; maxTurns: number;
   openers: string[]; resist: string[]; chorus?: string[];
   hi?: { openers: string[]; resist: string[]; chorus?: string[] };
+  ui?: { slot: "page" | "modal"; template: string; url?: string; actions: Record<string, string> };
 }
 export interface Family {
   id: FamilyId; label: string; device: DeviceKind; channel: string; caller: CallerInfo;
@@ -35,6 +36,7 @@ export interface Ontology {
   signals: Record<SignalKind, { delta: number; label: string }>;
   thresholds: { warn: number; nudge: number; trip: number };
   escalationMultiplier: number; playbookMultiplier: number; averageVictimSeconds: number;
+  moveCap?: number; engagement?: { cold: number; warm: number; hot: number };
 }
 
 export const ontology = ontologyJson as unknown as Ontology;

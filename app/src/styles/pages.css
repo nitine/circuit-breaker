@@ -94,7 +94,7 @@
 .debrief .paper .clip { position: absolute; top: -10px; right: 60px; width: 14px; height: 44px; border: 3px solid #8a8a8a; border-radius: 7px; border-bottom: 0; }
 .debrief .paper h2 { margin: 0 0 8px; font-size: 20px; }
 .debrief .paper .meta { font-size: 12px; line-height: 1.5; white-space: pre-line; }
-.debrief .stamp { position: absolute; right: 26px; top: 48px; border: 3px solid #c0392b; color: #c0392b; padding: 8px 14px; font-weight: 700; font-size: 16px; text-align: center; transform: rotate(12deg); line-height: 1.2; }
+.debrief .stamp { position: absolute; right: 18px; top: 14px; border: 3px solid #c0392b; color: #c0392b; padding: 8px 14px; font-weight: 700; font-size: 16px; text-align: center; transform: rotate(12deg); line-height: 1.2; }
 .debrief .stamp.green { border-color: #1a7f3a; color: #1a7f3a; }
 .debrief .stamp.dark { border-color: #7a1e1e; color: #7a1e1e; }
 .debrief .rule { height: 1px; background: #2b2118; margin: 14px 0; }
@@ -115,7 +115,7 @@
 @keyframes spin { to { transform: rotate(360deg) } }
 .debrief .tape .strip { position: relative; height: 44px; background: #1e160f; border-radius: 4px; margin: 10px 0; overflow: hidden; }
 .debrief .tape .played { position: absolute; left: 0; bottom: 0; height: 10px; background: var(--accent); transition: width .3s; }
-.debrief .tape .mark { position: absolute; top: 6px; background: var(--paper); color: #2b2118; font-family: var(--font-type); font-size: 9px; padding: 2px 5px; border-radius: 3px; white-space: nowrap; transform: translateX(-50%); }
+.debrief .tape .mark { position: absolute; top: 4px; background: var(--paper); color: #2b2118; font-family: var(--font-type); font-size: 9px; padding: 2px 5px; border-radius: 3px; white-space: nowrap; transform: translateX(-50%); }
 .debrief .tape .btns { display: flex; gap: 8px; }
 .debrief .tape .btns button { background: #8a7a62; color: #1e160f; border: 0; padding: 6px 12px; border-radius: 4px; font-weight: 700; font-size: 11px; }
 .debrief .endings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -143,3 +143,39 @@
 .how .legend .row.on span { color: #5a3a1a; }
 .how .legend .note { margin-top: 14px; font-size: 11px; color: var(--blue-note); line-height: 1.4; }
 @media (max-width: 1100px) { .debrief .layout { grid-template-columns: 1fr; } .how { grid-template-columns: 1fr; } .drill .stage.split { grid-template-columns: 1fr 1fr; } }
+.voice-status { padding: 6px 14px; border-top: 1px solid #2a2622; background: #0b0a08; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-size: 11px; color: #bdb5a6; }
+.voice-status i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; transition: box-shadow .2s; }
+.console button, .console .mic { display: inline-flex; align-items: center; gap: 6px; }
+.transcript .stance { margin-left: 8px; font-size: 10px; padding: 1px 6px; border-radius: 8px; vertical-align: middle; }
+.debrief .report { display: flex; flex-direction: column; gap: 2px; margin: 6px 0 14px; font-family: var(--font-type); font-size: 12px; max-height: 340px; overflow: auto; border: 1px solid #d9c9a8; background: #fffdf7; padding: 6px; }
+.debrief .rrow { display: grid; grid-template-columns: 42px 82px 1fr; gap: 8px; padding: 4px 6px; border-left: 3px solid transparent; align-items: start; }
+.debrief .rrow .t { color: #8a7a62; font-family: var(--font-mono); font-size: 11px; }
+.debrief .rrow .who { font-weight: 700; color: #1a1410; display: inline-flex; gap: 4px; align-items: center; font-size: 11px; }
+.debrief .rrow .txt small { display: block; color: #6b5636; font-size: 10.5px; margin-top: 1px; }
+.debrief .rrow.caller { background: #f7efe0; }
+.debrief .rrow.you { background: #eef4ff; }
+.debrief .rrow.device, .debrief .rrow.ui { background: #f3f3ee; font-style: italic; }
+.debrief .rrow.trip { background: #ffe4dc; font-weight: 700; }
+.debrief .rrow.family { background: #e6f6ea; }
+.debrief .rrow.bad { border-left-color: #e4572e; }
+.debrief .rrow.good { border-left-color: #1db954; }
+.debrief .rrow.warn { border-left-color: #f0b27a; }
+.debrief .move.good { background: #e6f6ea; }
+.debrief .move svg { vertical-align: -2px; }
+.debrief .tape .btns button { display: inline-flex; align-items: center; gap: 4px; }
+.debrief .polaroid .photo { display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+.debrief .tape .mark:nth-child(odd) { top: auto; bottom: 4px; }
+.debrief .meta { padding-right: 150px; }
+/* live transcript sits low so the gauge, lever and agent bubbles stay visible */
+.drill .roomcol .transcript { top: auto; bottom: 10px; max-height: 46%; }
+.drill .stage.laptop .console { gap: 6px; padding: 8px 10px; }
+.drill .stage.laptop .console .lab { width: 44px; font-size: 8px; }
+.drill .stage.laptop .console button { padding: 8px 10px; font-size: 12px; }
+.drill .stage.laptop .console form { min-width: 160px; }
+.chrome .tab { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+
+.drill .stage.laptop .console .lab { display: none; }
+.drill .stage.laptop .console button { white-space: nowrap; }
+.drill .stage.laptop .console form { min-width: 120px; }
+.drill .stage.laptop .voice-status { font-size: 10.5px; gap: 10px; }

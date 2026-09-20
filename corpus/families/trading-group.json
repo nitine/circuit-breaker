@@ -159,6 +159,15 @@
           "tax भरा, 2 घंटे में withdrawal मिल गया 👍",
           "सर मीरा जी की भी help कीजिए"
         ]
+      },
+      "ui": {
+        "slot": "page",
+        "template": "vip-tax",
+        "url": "vip-trades7.app/tax",
+        "actions": {
+          "pay": "payment_tapped",
+          "close": "pay_cancelled"
+        }
       }
     }
   ],

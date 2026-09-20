@@ -91,6 +91,16 @@
         "resist": [
           "मैडम, बिना परमिशन KYC पूरा नहीं होगा। हर ऐप यही माँगता है। अलाउ कीजिए, मैं अभी आपका नाम क्लियर करता हूँ।"
         ]
+      },
+      "ui": {
+        "slot": "page",
+        "template": "kyc-form",
+        "url": "qkrupee.in/kyc",
+        "actions": {
+          "allow": "link_opened",
+          "submit": "payment_tapped",
+          "close": "link_dismissed"
+        }
       }
     },
     {

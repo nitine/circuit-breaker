@@ -16,27 +16,36 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-Without AWS credentials the app runs in **local mode**: the caller speaks scripted lines from the corpus, the Analyst uses keyword rules, your browser does speech in and out, and everything lives in memory. The whole drill works end to end.
+Without AWS credentials the app runs in **local mode** and still does the whole drill end to end: the caller talks, listens, reacts to what you do on the device, and the room scores it. Three optional installs make local mode fully live:
+
+```bash
+tools/piper/install.sh   # Piper voices (en + hi) for the caller, Vosk models so your mic works in any browser  (~350 MB)
+tools/llm/install.sh     # llama.cpp + Qwen2.5-3B-Instruct so the caller improvises instead of reading the playbook  (~2 GB)
+tools/llm/serve.sh       # start the local model on :8081, then set LLM_BASE_URL / LLM_MODEL in app/.env (see .env.example)
+```
 
 To run against AWS locally, copy `app/.env.example` to `app/.env` and fill in credentials plus model IDs. With `CB_MODE=aws` the caller is Claude on Bedrock, the Analyst tags coercion with a JSON schema, Transcribe listens, Polly speaks, and the packet pipeline runs on Lambda if the table, bucket and bus are set.
 
 Try a drill without typing: open `/drill/<id>?auto=1` and the judge replies for you.
 
-### Voice, and how the AI works in each mode
+### The voice pipeline, and how the AI works in each mode
 
-Both parties talk. The caller speaks, and you can answer by voice or by typing.
+Both parties talk. The caller speaks; you answer by voice or by typing. The mic is captured in the browser as 16 kHz PCM and streamed over the drill WebSocket, so speech recognition never depends on the browser vendor.
 
 | | AWS mode (keys set) | Local mode |
 | --- | --- | --- |
-| The caller's brain | Claude on Bedrock, running the playbook and adapting to what you say | Scripted playbook lines with resist branches: it advances a phase when you comply, re-asserts when you push back |
-| The caller's voice | Amazon Polly (Kajal; Hindi too) | Piper, an open-source neural TTS, if installed (`tools/piper/install.sh`, English only); else the browser's own voices; else captions |
-| Your voice | Amazon Transcribe streaming, en-IN or hi-IN | Chrome's built-in speech recognition (needs Google Chrome and internet); else type |
-| The Analyst | Claude Haiku tagging tactics with a JSON schema | Keyword rules per tactic |
-| The world builder | Claude builds the persona's phone | Templates per persona |
+| The caller's brain | Claude on Bedrock, improvising inside the playbook and reacting to every device action | Any OpenAI-compatible model (`tools/llm/serve.sh` runs Qwen2.5-3B on llama.cpp); without one, playbook lines with resist branches |
+| The caller's voice | Amazon Polly (English and Hindi voices) | Piper neural TTS (English and Hindi voices); else the browser's own voices; else captions |
+| Your voice | Amazon Transcribe streaming, en-IN or hi-IN | Vosk on the server (en-IN and Hindi models, streamed from your mic); else Chrome's speech recognition; else type |
+| The Analyst | Claude Haiku tagging tactics with a JSON schema, keyword rules as a belt and braces | Keyword rules per tactic, English and Hindi |
+| The world builder | Claude builds the persona's phone: contacts, chats, mails, bank, hook SMS | Templates per persona (or the local model, if running) |
+| The pages the caller sends | Claude rewrites a base HTML template per drill | The base template, rendered in a sandboxed frame |
 
-Linux note: Chrome on Linux usually ships with no speech voices, so run `tools/piper/install.sh` once (about 190 MB of voices) or set AWS keys. Ring tones, notification chimes and the scare-page siren are synthesized in the browser and work everywhere.
+Every page the scammer "sends" (the RBI verification form, the AnyDesk installer, the refund portal, the onboarding form) is generated UI: a base template in `corpus/ui/` with a tiny bridge script, rewritten by the model per drill, rendered in a sandboxed iframe inside the phone or laptop. Its buttons post back as device events, so the caller reacts to what you clicked.
 
-**Language.** The picker offers English and Hindi. Hindi switches Transcribe to hi-IN, Polly to a Hindi voice, and the caller's lines to Devanagari Hinglish (in local mode, the three phone cases have Hindi playbooks).
+**Deployed**, the site sits behind CloudFront over HTTPS, so the mic permission works and the voice pipeline is Transcribe → Bedrock → Polly. Ring tones, notification chimes and the scare-page siren are synthesized in the browser and work everywhere.
+
+**Language.** The picker offers English and Hindi. Hindi switches the Listener to hi-IN (Transcribe or Vosk), the caller's voice to a Hindi voice (Polly or Piper), and the caller's lines to Devanagari Hinglish.
 
 ## Deploy (Ship It)
 
@@ -47,7 +56,7 @@ npx cdk bootstrap aws://$CDK_DEFAULT_ACCOUNT/ap-south-1 aws://$CDK_DEFAULT_ACCOU
 npm run deploy      # prints the CloudFront URL
 ```
 
-Docker must be running. Enable model access for the two Bedrock models first. See `infra/README.md`.
+Docker must be running. Enable model access for the two Bedrock models first. The full guide, with model and region options, cost per drill, updating, teardown and troubleshooting, is in [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## What runs where
 

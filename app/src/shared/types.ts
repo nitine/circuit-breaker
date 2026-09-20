@@ -5,7 +5,7 @@ export type Tactic =
   | "URGENCY" | "CONTROL" | "PAYMENT_STEERING" | "RECIPROCITY";
 export type SignalKind =
   | "long_call" | "share_shown" | "share_accepted" | "remote_accepted" | "otp_arrived"
-  | "bank_opened" | "group_isolation" | "scare_page" | "otp_read" | "payment_tapped";
+  | "bank_opened" | "group_isolation" | "scare_page" | "otp_read" | "payment_tapped" | "went_along";
 export type AgentName = "listener" | "analyst" | "archivist" | "guardian" | "reporter";
 export type AgentState = "idle" | "walk" | "act";
 export type LadderState = "armed" | "warn" | "nudge" | "tripped" | "ended";
@@ -24,6 +24,8 @@ export interface World {
   guardian: { name: string; relation: string; label: string; number: string };
   smsThreads: SmsThread[];
   bank: { name: string; masked: string; balance: number; txns: Txn[] };
+  chats: { name: string; last: string; time: string }[];
+  mails: { from: string; subj: string; body: string; when: string }[];
   apps: string[];
   language: "en" | "hi" | "kn";
   hook: string;
@@ -55,18 +57,22 @@ export interface DrillSummary {
   members?: GroupMember[];
   world: World;
   awsMode: boolean;
-  features: { transcribe: boolean; polly: boolean; bedrock: boolean };
+  features: { transcribe: boolean; polly: boolean; bedrock: boolean; stt?: "transcribe" | "vosk" | "none"; llm?: "bedrock" | "openai" | "none" };
 }
 
 export interface Move { ts: number; tactics: Tactic[]; delta: number; quote: string; phase: string; playbookScore: number; index: number }
 export interface Signal { ts: number; kind: SignalKind; delta: number; source: string; index: number }
-export interface Utterance { ts: number; speaker: "judge" | "scammer" | "member"; text: string; name?: string }
+export type Stance = "comply" | "resist" | "neutral" | "leak";
+export interface Utterance { ts: number; speaker: "judge" | "scammer" | "member"; text: string; name?: string; stance?: Stance; kind?: string; phase?: string }
+export interface UiStep { id: string; target: DeviceKind; slot: "page" | "modal"; title: string; url?: string; html: string; actions: Record<string, string> }
 export interface LadderStep { ts: number; from: LadderState; to: LadderState; index: number }
 
 export interface Debrief {
   drill: DrillSummary;
   utterances: Utterance[];
   moves: Move[];
+  reactions: number;
+  uiSteps: { id: string; title: string; action?: string; ts: number }[];
   signals: Signal[];
   ladder: LadderStep[];
   trip?: { ts: number; index: number };
@@ -93,6 +99,13 @@ export type ServerEvent =
   | { type: "ladder.step"; from: LadderState; to: LadderState; index: number; seq: number }
   | { type: "breaker.trip"; index: number; seq: number }
   | { type: "family.called"; name: string; line: { native: string; en: string }; audio?: string; mime?: string; seq: number }
+  | { type: "family.notified"; name: string; relation: string; channel: "whatsapp"; message: string; seq: number }
+  | { type: "family.replied"; name: string; text: string; native?: string; audio?: string; mime?: string; seq: number }
+  | { type: "listener.hearing"; level: number; seq: number }
+  | { type: "judge.stance"; stance: Stance; text: string; seq: number }
+  | { type: "ui.render"; step: UiStep; seq: number }
+  | { type: "ui.close"; id: string; seq: number }
+  | { type: "caller.reaction"; to: string; seq: number }
   | { type: "packet.progress"; percent: number; seq: number }
   | { type: "packet.ready"; url: string; seq: number }
   | { type: "world.notification"; app: string; sender?: string; title: string; body: string; attachment?: string; seq: number }
@@ -106,6 +119,7 @@ export type ClientEvent =
   | { type: "text.reply"; text: string; source: "typed" | "speech" }
   | { type: "device.event"; kind: string; app?: string; detail?: string }
   | { type: "family.answered" }
+  | { type: "ui.action"; id: string; action: string }
   | { type: "audio.start"; sampleRate: number; lang: string }
   | { type: "audio.stop" }
   | { type: "drill.end" };

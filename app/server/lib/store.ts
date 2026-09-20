@@ -8,6 +8,7 @@ export interface DrillRecord {
   moves: Move[];
   signals: Signal[];
   ladderSteps: LadderStep[];
+  uiSteps: { id: string; title: string; action?: string; ts: number }[];
   trip?: { ts: number; index: number };
   packet?: { md: string; url?: string; status: "pending" | "ready" | "none" };
   leaked: string[];

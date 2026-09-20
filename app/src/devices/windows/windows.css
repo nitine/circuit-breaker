@@ -102,3 +102,12 @@
 .anydesk .req .row button { padding: 7px 16px; border-radius: 4px; border: 1px solid #ccc; background: #fff; }
 .anydesk .req .row button.ok { background: #2e7d32; color: #fff; border-color: #2e7d32; }
 .win-family { position: absolute; inset: 0; z-index: 60; background: #fffffff2; color: #1a1410; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; animation: fadeIn .4s; }
+.win-desk-icons { position: absolute; left: 12px; top: 12px; display: flex; flex-direction: column; gap: 10px; z-index: 0; }
+.win-desk-icon { width: 74px; background: none; border: 0; color: #fff; font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-shadow: 0 1px 2px #000; padding: 6px 2px; border-radius: 4px; }
+.win-desk-icon:hover { background: #ffffff22; }
+.win-desk-icon svg { font-size: 30px; width: 30px; height: 30px; }
+.win-title .ctl button { display: grid; place-items: center; }
+.gmail .nav div.item { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.gmail .compose { display: inline-flex; gap: 8px; align-items: center; }
+.meet .bar button { display: grid; place-items: center; }
+.win-taskbar .tb { display: grid; place-items: center; }

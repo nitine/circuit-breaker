@@ -5,6 +5,8 @@ import { buildWorld } from "./world";
 import { cfg, features } from "./config";
 import * as store from "./store";
 import { buildPacketMarkdown } from "./reporter";
+import { sttMode } from "./listener";
+import { provider } from "./llm";
 
 export { catalog };
 
@@ -36,9 +38,9 @@ export async function createDrill(body: CreateDrillBody): Promise<DrillSummary> 
     members: fam.members,
     world,
     awsMode: cfg.isAws,
-    features: features(),
+    features: { ...features(), stt: sttMode(body.language === "hi" ? "hi-IN" : "en-IN"), llm: await provider() },
   };
-  store.put({ summary, utterances: [], moves: [], signals: [], ladderSteps: [], leaked: [] });
+  store.put({ summary, utterances: [], moves: [], signals: [], ladderSteps: [], uiSteps: [], leaked: [] });
   return summary;
 }
 
@@ -52,11 +54,12 @@ export async function getDebrief(id: string): Promise<Debrief | undefined> {
   const stickers: string[] = [];
   if (!rec.leaked.some((l) => l.startsWith("OTP"))) stickers.push("🛡 kept the OTP");
   if (!rec.signals.some((s) => s.kind === "share_accepted" || s.kind === "remote_accepted")) stickers.push("📵 no screen share");
-  if (rec.utterances.some((u) => u.speaker === "judge" && /(son|daughter|husband|wife|call|police station|branch|verify)/i.test(u.text))) stickers.push("🗣 said they'd check with someone");
+  if (rec.utterances.some((u) => u.stance === "resist")) stickers.push("🗣 pushed back");
+  if (rec.uiSteps?.some((s) => s.action === "close")) stickers.push("🚪 closed their page");
   if (rec.ending === "A") stickers.push("🚪 got out early");
   const atRisk = d.world.bank.balance;
   return {
-    drill: d, utterances: rec.utterances, moves: rec.moves, signals: rec.signals, ladder: rec.ladderSteps, trip: rec.trip,
+    drill: d, utterances: rec.utterances, moves: rec.moves, signals: rec.signals, ladder: rec.ladderSteps, trip: rec.trip, reactions: rec.utterances.filter((u) => u.kind?.startsWith("reaction")).length, uiSteps: rec.uiSteps ?? [],
     packetUrl: rec.packet?.url, packetStatus: rec.packet?.status ?? "none",
     durationSec, averageVictimSec: ontology.averageVictimSeconds, leaked: rec.leaked, stickers, atRisk,
   };

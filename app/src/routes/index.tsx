@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { MdCall } from "~/components/icons";
 import { Room } from "~/room/Room";
 import { useRoom } from "~/room/roomStore";
 import { Topbar } from "~/components/Topbar";
@@ -23,7 +24,7 @@ function Landing() {
           <h1>Get scammed.<br />Safely.</h1>
           <p className="sub">A real AI scammer calls you. Five agents in this room listen for coercion and trip the breaker before you lose anything. Built for the people scammers target: elders, students, migrant workers, anyone alone with a phone.</p>
           <div className="ctas">
-            <Link to="/drill/new" className="px-btn primary">📞 Start the drill</Link>
+            <Link to="/drill/new" className="px-btn primary"><MdCall size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />Start the drill</Link>
             <Link to="/how" className="px-btn ghost">How the room works</Link>
           </div>
           <div className="trust">No real money. No recordings kept. Fictional scenarios only. Not affiliated with any app, bank or agency shown.</div>

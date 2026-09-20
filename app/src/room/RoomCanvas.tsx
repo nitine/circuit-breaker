@@ -27,6 +27,15 @@ export function RoomCanvas({ interactiveHover, onHover }: { interactiveHover?: b
       const dt = Math.min(50, now - last); last = now; sim.t += dt;
       step(dt);
       const st = useRoom.getState();
+      if (st.mode === "live" || st.mode === "tripped") {
+        idleTimer += dt;
+        if (idleTimer > 7000) {
+          idleTimer = 0;
+          const pick: [AgentName, Pt, number][] = [["archivist", SCENE.spots.cabinet, 700], ["analyst", SCENE.spots.board, 500], ["reporter", SCENE.spots.printer, 500], ["guardian", SCENE.spots.lever, 600]];
+          const [a, to, ms] = pick[Math.floor(Math.random() * pick.length)];
+          if (!sim.agents[a].queue.length && Math.random() < 0.75) enqueue(a, { kind: "go", to }, { kind: "act", ms }, { kind: "home" });
+        }
+      }
       if (st.mode === "attract") {
         idleTimer += dt;
         if (idleTimer > 4500) {
@@ -132,13 +141,14 @@ function draw(ctx: CanvasRenderingContext2D, hover: string | null) {
   });
   // Lever: patch over the painted handle, then draw ours in the right position.
   withAlpha("lever", () => {
-    const l = O.lever; const plate = imgs.bg ? sample(ctx, l.x + 6, l.y + l.h / 2) : "#555";
-    px(ctx, l.x + l.w * 0.18, l.y + 8, l.w * 0.64, l.h - 16, plate);
-    px(ctx, l.x + l.w / 2 - 4, l.y + 14, 8, l.h - 28, "#111");
-    const knobY = sim.leverDown ? l.y + l.h - 34 : l.y + 14;
-    px(ctx, l.x + l.w / 2 - 14, knobY, 28, 20, "#e4572e"); px(ctx, l.x + l.w / 2 - 12, knobY + 3, 24, 6, "#ff8a65");
-    ctx.fillStyle = sim.leverDown ? "#e4572e" : "#1db954"; ctx.beginPath(); ctx.arc(l.x + 10, l.y + l.h - 8, 5, 0, Math.PI * 2); ctx.fill();
-    if (sim.leverDown && Math.floor(t / 250) % 2 === 0) { ctx.fillStyle = "#e4572e"; ctx.beginPath(); ctx.arc(l.x + l.w - 10, l.y + l.h - 8, 5, 0, Math.PI * 2); ctx.fill(); }
+    const l = O.lever;
+    // The painted plate: inner slot region is drawn fresh so the knob can move.
+    const ix = l.x + l.w * 0.27, iw = l.w * 0.46, iy = l.y + l.h * 0.12, ih = l.h * 0.76;
+    px(ctx, ix, iy, iw, ih, "#4a4a4a"); px(ctx, ix + iw * 0.35, iy + 6, iw * 0.3, ih - 12, "#151515");
+    const knobH = 18; const knobY = sim.leverDown ? iy + ih - knobH - 6 : iy + 6;
+    px(ctx, ix + 2, knobY, iw - 4, knobH, "#e4572e"); px(ctx, ix + 4, knobY + 3, iw - 8, 5, "#ff8a65"); px(ctx, ix + 2, knobY + knobH - 3, iw - 4, 3, "#a83a1e");
+    ctx.fillStyle = sim.leverDown ? "#e4572e" : "#1db954"; ctx.beginPath(); ctx.arc(l.x + l.w * 0.15, l.y + l.h - 10, 4, 0, Math.PI * 2); ctx.fill();
+    if (sim.leverDown && Math.floor(t / 250) % 2 === 0) { ctx.fillStyle = "#e4572e"; ctx.beginPath(); ctx.arc(l.x + l.w * 0.85, l.y + l.h - 10, 4, 0, Math.PI * 2); ctx.fill(); }
   });
   // Cabinet: a drawer slides out while the Archivist works.
   withAlpha("cabinet", () => { if (st.drawerOpen && Date.now() < st.cabinetUntil) { const c = O.cabinet; px(ctx, c.x + 18, c.y + c.h * 0.42, c.w - 36, 26, "#a67c4a"); px(ctx, c.x + 18, c.y + c.h * 0.42, c.w - 36, 4, "#7a4a1a"); px(ctx, c.x + c.w / 2 - 20, c.y + c.h * 0.42 + 8, 40, 14, "#fff6d5"); } });
