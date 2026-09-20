@@ -1,0 +1,43 @@
+flowchart LR
+  subgraph Browser["Browser"]
+    Device["Device replica<br/>One UI or Windows 11<br/>generated pages in a sandboxed iframe"]
+    Room["Control room<br/>pixel-art canvas"]
+  end
+  CF["CloudFront<br/>HTTPS and WSS"]
+  subgraph App["ECS Fargate behind an ALB: one Node process"]
+    WS["Drill WebSocket<br/>TanStack Start + Nitro"]
+    Caller["Caller<br/>red agent"]
+    subgraph TheRoom["The room"]
+      Listener["Listener<br/>hears the judge"]
+      Analyst["Analyst<br/>tags tactics"]
+      Archivist["Archivist<br/>files moves and pages"]
+      Guardian["Guardian<br/>holds the lever"]
+      Reporter["Reporter<br/>files the packet"]
+    end
+  end
+  Transcribe["Amazon Transcribe<br/>streaming, en-IN or hi-IN"]
+  Polly["Amazon Polly<br/>caller and family voices"]
+  Bedrock["Amazon Bedrock<br/>Converse API"]
+  DDB[("DynamoDB<br/>drill state, 24 h TTL")]
+  EB["EventBridge<br/>drill.tripped"]
+  SFN["Step Functions Express"]
+  Lambda["Reporter Lambda<br/>Strands Agents SDK"]
+  S3[("S3<br/>1930 packet")]
+  CW["CloudWatch<br/>dashboard and billing alarms"]
+
+  Device <-->|"mic PCM, device events, audio"| CF
+  Room <-->|"room events"| CF
+  CF <--> WS
+  WS --> Caller
+  WS --> TheRoom
+  Caller -->|"improvise, build the world, rewrite pages"| Bedrock
+  Caller --> Polly
+  Listener --> Transcribe
+  Analyst -->|"tag tactics, JSON schema"| Bedrock
+  Archivist --> DDB
+  Guardian --> Polly
+  Reporter --> EB --> SFN --> Lambda
+  Lambda --> Bedrock
+  Lambda --> S3
+  Lambda -->|"packet URL"| DDB
+  App -.-> CW

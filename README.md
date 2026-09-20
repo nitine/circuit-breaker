@@ -40,71 +40,17 @@ To use AWS services from your machine, copy `app/.env.example` to `app/.env` and
 
 ## Architecture
 
-```mermaid
-flowchart LR
-  subgraph Browser["Browser"]
-    Device["Device replica<br/>One UI or Windows 11<br/>generated pages in a sandboxed iframe"]
-    Room["Control room<br/>pixel-art canvas"]
-  end
-  CF["CloudFront<br/>HTTPS and WSS"]
-  subgraph App["ECS Fargate behind an ALB: one Node process"]
-    WS["Drill WebSocket<br/>TanStack Start + Nitro"]
-    Caller["Caller<br/>red agent"]
-    subgraph TheRoom["The room"]
-      Listener["Listener<br/>hears the judge"]
-      Analyst["Analyst<br/>tags tactics"]
-      Archivist["Archivist<br/>files moves and pages"]
-      Guardian["Guardian<br/>holds the lever"]
-      Reporter["Reporter<br/>files the packet"]
-    end
-  end
-  Transcribe["Amazon Transcribe<br/>streaming, en-IN or hi-IN"]
-  Polly["Amazon Polly<br/>caller and family voices"]
-  Bedrock["Amazon Bedrock<br/>Converse API"]
-  DDB[("DynamoDB<br/>drill state, 24 h TTL")]
-  EB["EventBridge<br/>drill.tripped"]
-  SFN["Step Functions Express"]
-  Lambda["Reporter Lambda<br/>Strands Agents SDK"]
-  S3[("S3<br/>1930 packet")]
-  CW["CloudWatch<br/>dashboard and billing alarms"]
+![architecture](docs/diagrams/architecture.svg)
 
-  Device <-->|"mic PCM, device events, audio"| CF
-  Room <-->|"room events"| CF
-  CF <--> WS
-  WS --> Caller
-  WS --> TheRoom
-  Caller -->|"improvise, build the world, rewrite pages"| Bedrock
-  Caller --> Polly
-  Listener --> Transcribe
-  Analyst -->|"tag tactics, JSON schema"| Bedrock
-  Archivist --> DDB
-  Guardian --> Polly
-  Reporter --> EB --> SFN --> Lambda
-  Lambda --> Bedrock
-  Lambda --> S3
-  Lambda -->|"packet URL"| DDB
-  App -.-> CW
-```
+<sup>Source: [docs/diagrams/architecture.mmd](docs/diagrams/architecture.mmd)</sup>
 
 Default models are `openai.gpt-oss-120b-1:0` for the caller and `amazon.nova-lite-v1:0` for the Analyst, world builder, generated pages and Reporter. Claude on Bedrock is a one-variable swap once the Anthropic use-case form is approved.
 
 ## The coercion engine
 
-```mermaid
-flowchart LR
-  T["Transcript line"] --> A["Analyst<br/>up to 3 tactics per line"]
-  A --> W["Tactic weights<br/>third repeat in 60 s x1.3<br/>cap 14 per move"]
-  W --> E["x engagement<br/>cold 0.45, warm 0.7, hot 1.0"]
-  S["Device signals<br/>share accepted +15<br/>remote access +25<br/>OTP read out +20"] --> I
-  E --> I["Coercion index<br/>monotonic, 0 to 100"]
-  I --> L{"Ladder"}
-  L -->|"40"| Warn["Guardian warns"]
-  L -->|"55"| Nudge["Guardian nudges"]
-  L -->|"70 and hot"| Trip["Breaker trips"]
-  Trip --> G["Guardian messages<br/>the family on WhatsApp"]
-  G --> F["Family on the line"]
-  Trip --> R["Reporter<br/>1930 packet and debrief"]
-```
+![coercion engine](docs/diagrams/coercion-engine.svg)
+
+<sup>Source: [docs/diagrams/coercion-engine.mmd](docs/diagrams/coercion-engine.mmd)</sup>
 
 Engagement is cold until you go along with something, warm after one compliance or a soft device signal, hot after two compliances or a hard one (screen share, remote access, OTP read, payment). While not hot, the index holds at 69 and the Guardian says so. Weights and thresholds live in `corpus/ontology.json`.
 
