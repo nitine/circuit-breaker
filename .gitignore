@@ -1,6 +1,30 @@
+# dependencies and build output
 node_modules/
+dist/
+.output/
+cdk.out/
+infra/cdk.context.json
+
+# local environment and credentials (never commit)
 .env
 .env.*
-cdk.out/
-dist/
+!.env.example
+*.pem
+*.key
+
+# tool scratch: browser sessions, screenshots, logs, audio samples
+.playwright-mcp/
+*.log
+*.pcm
+*.wav
+*.mp3
+.claude/settings.local.json
+
+# local model and voice binaries (fetched by tools/*/install.sh)
+tools/llm/bin/
+tools/llm/models/
+tools/piper/models/
+tools/piper/voices/*.onnx
+tools/**/.venv/
+
 .DS_Store
