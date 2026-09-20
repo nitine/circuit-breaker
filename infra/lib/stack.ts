@@ -7,6 +7,10 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as secrets from "aws-cdk-lib/aws-secretsmanager";
+import * as route53 from "aws-cdk-lib/aws-route53";
+import * as r53targets from "aws-cdk-lib/aws-route53-targets";
+import * as acm from "aws-cdk-lib/aws-certificatemanager";
+import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as sfn from "aws-cdk-lib/aws-stepfunctions";
 import * as tasks from "aws-cdk-lib/aws-stepfunctions-tasks";
@@ -22,6 +26,10 @@ import { Construct } from "constructs";
 export interface CbProps extends cdk.StackProps {
   /** Put CloudFront in front of the ALB (default true). */
   edge?: boolean;
+  /** A domain in a Route 53 hosted zone: ACM certificate + HTTPS listener on the ALB, apex and www aliases. */
+  domain?: { name: string; hostedZoneId: string };
+  /** HTTPS without a domain or CloudFront: a t3.micro running Caddy with a Let's Encrypt cert for <elastic-ip>.sslip.io, proxying to the ALB. */
+  tlsProxy?: boolean;
   /** Fallback OpenAI-compatible caller brain. */
   llm?: { provider?: string; baseUrl?: string; model?: string; analystModel?: string };
   bedrockRegion: string; redModel: string; analystModel: string; guardrailId?: string; guardrailVersion?: string;
@@ -147,11 +155,38 @@ export class CircuitBreakerStack extends cdk.Stack {
       new cw.GraphWidget({ title: "Packet pipeline", left: [machine.metricStarted(), machine.metricFailed()] }),
     );
 
+    if (props.domain) {
+      const zone = route53.HostedZone.fromHostedZoneAttributes(this, "Zone", { hostedZoneId: props.domain.hostedZoneId, zoneName: props.domain.name });
+      const cert = new acm.Certificate(this, "Cert", { domainName: props.domain.name, subjectAlternativeNames: [`www.${props.domain.name}`], validation: acm.CertificateValidation.fromDns(zone) });
+      service.loadBalancer.addListener("Https", { port: 443, certificates: [cert], defaultTargetGroups: [service.targetGroup], sslPolicy: elbv2.SslPolicy.RECOMMENDED_TLS });
+      service.listener.addAction("RedirectToHttps", { action: elbv2.ListenerAction.redirect({ protocol: "HTTPS", port: "443", permanent: true }) });
+      const alias = route53.RecordTarget.fromAlias(new r53targets.LoadBalancerTarget(service.loadBalancer));
+      new route53.ARecord(this, "Apex", { zone, target: alias });
+      new route53.ARecord(this, "Www", { zone, recordName: "www", target: alias });
+      siteUrl = `https://${props.domain.name}`;
+    }
+    if (props.tlsProxy) {
+      const sg = new ec2.SecurityGroup(this, "TlsProxySg", { vpc, allowAllOutbound: true, description: "Caddy TLS proxy for the drill" });
+      sg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80)); sg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(443));
+      const eip = new ec2.CfnEIP(this, "TlsProxyIp", { domain: "vpc" });
+      const host = cdk.Fn.join("", [cdk.Fn.join("-", cdk.Fn.split(".", eip.attrPublicIp)), ".sslip.io"]);
+      const userData = ec2.UserData.forLinux();
+      userData.addCommands(
+        "curl -fsSL 'https://caddyserver.com/api/download?os=linux&arch=amd64' -o /usr/local/bin/caddy && chmod +x /usr/local/bin/caddy",
+        "mkdir -p /etc/caddy /var/lib/caddy",
+        cdk.Fn.join("", ["printf '%s\\n' '", host, " {' '  reverse_proxy http://", service.loadBalancer.loadBalancerDnsName, " {' '    header_up Host {upstream_hostport}' '    header_up X-Forwarded-Proto https' '  }' '}' > /etc/caddy/Caddyfile"]),
+        "printf '%s\\n' '[Unit]' 'Description=Caddy TLS proxy' 'After=network-online.target' '[Service]' 'Environment=XDG_DATA_HOME=/var/lib' 'ExecStart=/usr/local/bin/caddy run --config /etc/caddy/Caddyfile' 'Restart=always' '[Install]' 'WantedBy=multi-user.target' > /etc/systemd/system/caddy.service",
+        "systemctl daemon-reload && systemctl enable --now caddy",
+      );
+      const proxy = new ec2.Instance(this, "TlsProxy", { vpc, vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC }, instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO), machineImage: ec2.MachineImage.latestAmazonLinux2023(), securityGroup: sg, userData });
+      new ec2.CfnEIPAssociation(this, "TlsProxyIpAssoc", { allocationId: eip.attrAllocationId, instanceId: proxy.instanceId });
+      new cdk.CfnOutput(this, "HttpsUrl", { value: cdk.Fn.join("", ["https://", host]) });
+    }
     new cdk.CfnOutput(this, "Url", { value: siteUrl });
     new cdk.CfnOutput(this, "AlbUrl", { value: `http://${service.loadBalancer.loadBalancerDnsName}` });
     new cdk.CfnOutput(this, "TableName", { value: table.tableName });
     new cdk.CfnOutput(this, "BucketName", { value: bucket.bucketName });
     new cdk.CfnOutput(this, "BusName", { value: bus.eventBusName });
-    new cdk.CfnOutput(this, "LlmSecret", { value: llmSecret.secretName });
+    new cdk.CfnOutput(this, "LlmSecretName", { value: llmSecret.secretName });
   }
 }

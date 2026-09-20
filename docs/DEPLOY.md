@@ -55,6 +55,17 @@ The first deploy takes about 15 minutes, most of it CloudFront. Outputs:
 
 Open `Url`, start a drill, allow the microphone. The console at the bottom of the drill page shows `caller: Amazon Polly` and `you: Amazon Transcribe` when the pipeline is live.
 
+## 3a. Your own domain (HTTPS without CloudFront)
+
+A domain in a Route 53 hosted zone gives the ALB a certificate and an HTTPS listener, so the mic works without CloudFront:
+
+```bash
+aws route53 create-hosted-zone --name circuitbreaker.click --caller-reference cb-1   # paste its 4 nameservers at your registrar
+CB_DOMAIN=circuitbreaker.click CB_ZONE_ID=<hosted zone id> CB_EDGE=0 npm run deploy
+```
+
+The stack requests the ACM certificate (DNS-validated in the zone), adds the 443 listener, redirects 80 → 443, and creates the apex and `www` aliases. `CB_TLS_PROXY=1` is the no-domain alternative: a t3.micro running Caddy with a Let's Encrypt certificate for `<elastic-ip>.sslip.io`.
+
 ## 3b. Fallback caller brain (OpenRouter or Groq)
 
 Bedrock is the first choice. If it refuses (new account, model access pending), the app falls back to any OpenAI-compatible endpoint, and switches back to Bedrock on its own once it answers (`LLM_PROVIDER=auto`). The endpoint and models are plain task environment; the key lives in Secrets Manager.
