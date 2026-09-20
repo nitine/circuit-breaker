@@ -158,7 +158,7 @@ export class DrillSession {
     if (this.silenceTimer) clearTimeout(this.silenceTimer);
     if (this.isGroup || this.silences >= 3 || this.ladder.isTripped()) return;
     // No "are you there?" while the judge is reading a page or a document the caller sent; silence is re-armed when it closes.
-    this.silenceTimer = this.later(16_000, () => { if (this.uiOpen || this.judgeTalking) { this.armSilence(); return; } if (!this.busy && !this.ended && !this.pendingReaction) { this.silences++; void this.reactTo("silence"); } });
+    this.silenceTimer = this.later(22_000, () => { if (this.uiOpen || this.judgeTalking) { this.armSilence(); return; } if (!this.busy && !this.ended && !this.pendingReaction) { this.silences++; void this.reactTo("silence"); } });
   }
 
   private async onJudge(text: string) {

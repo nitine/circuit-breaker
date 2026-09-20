@@ -55,8 +55,11 @@ async function chatOpenAI(o: ChatOpts): Promise<string> {
   const body = {
     model: o.tier === "smart" ? OPENAI_MODEL : OPENAI_FAST_MODEL,
     messages: [{ role: "system", content: o.system }, ...o.messages.map((m) => ({ role: m.role, content: m.text }))],
-    max_tokens: o.maxTokens ?? 200,
+    max_tokens: Math.round((o.maxTokens ?? 200) * 1.3),
     temperature: o.temperature ?? 0.7,
+    // Hybrid "thinking" models (DeepSeek V4, Qwen3) otherwise burn the budget on hidden reasoning and return an empty line.
+    reasoning: { enabled: false, exclude: true },
+    chat_template_kwargs: { enable_thinking: false },
     ...(o.json ? { response_format: { type: "json_object" } } : {}),
   };
   const r = await fetch(`${OPENAI_BASE.replace(/\/$/, "")}/chat/completions`, {
@@ -66,7 +69,7 @@ async function chatOpenAI(o: ChatOpts): Promise<string> {
   });
   if (!r.ok) throw new Error(`llm ${r.status} ${(await r.text()).slice(0, 120)}`);
   const j = (await r.json()) as { choices?: { message?: { content?: string } }[] };
-  return j.choices?.[0]?.message?.content ?? "";
+  return (j.choices?.[0]?.message?.content ?? "").replace(/<think>[\s\S]*?<\/think>/g, "").trim();
 }
 
 export async function chat(o: ChatOpts): Promise<string> {
