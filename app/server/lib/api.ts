@@ -49,6 +49,11 @@ export async function getDrill(id: string) { return (await store.load(id))?.summ
 export async function getDebrief(id: string): Promise<Debrief | undefined> {
   const rec = await store.load(id);
   if (!rec) return undefined;
+  if (rec.packet?.status === "pending") {
+    const fresh = await store.reload(id);
+    if (fresh?.packet?.status === "ready") rec.packet = fresh.packet;
+    else if (Date.now() - (rec.summary.endedAt ?? rec.summary.createdAt) > 180_000) rec.packet = { ...rec.packet, url: `/api/drills/${id}/packet`, status: "ready" }; // Lambda never answered; serve the in-process packet
+  }
   const d = rec.summary; const t0 = d.startedAt ?? d.createdAt;
   const durationSec = Math.round(((d.endedAt ?? Date.now()) - t0) / 1000);
   const stickers: string[] = [];

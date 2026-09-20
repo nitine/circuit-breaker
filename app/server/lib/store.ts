@@ -51,6 +51,17 @@ export async function persist(rec: DrillRecord) {
   }
 }
 
+/** Re-read the record from DynamoDB (bypassing the in-memory copy) and return it without replacing the live one. */
+export async function reload(id: string): Promise<DrillRecord | undefined> {
+  if (!cfg.ddbTable) return undefined;
+  try {
+    const { GetCommand } = await import("@aws-sdk/lib-dynamodb");
+    const client = await ddb();
+    const out = await client.send(new GetCommand({ TableName: cfg.ddbTable, Key: { pk: id, sk: "DRILL" }, ConsistentRead: true }));
+    return out.Item?.data ? (JSON.parse(out.Item.data as string) as DrillRecord) : undefined;
+  } catch { return undefined; }
+}
+
 export async function load(id: string): Promise<DrillRecord | undefined> {
   const local = records.get(id);
   if (local || !cfg.ddbTable) return local;

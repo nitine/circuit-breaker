@@ -1,3 +1,4 @@
+import { persist } from "./store";
 import type { DrillRecord } from "./store";
 import { cfg } from "./config";
 import { s3, eventbridge } from "./aws";
@@ -42,6 +43,7 @@ export async function filePacket(rec: DrillRecord, onProgress: (p: number) => vo
   // Serverless pipeline: EventBridge → Step Functions → Strands Reporter Lambda → S3 → DynamoDB
   if (cfg.eventBus) {
     try {
+      await persist(rec); // the Lambda reads this record; the debounced write would lose the race
       const eb = await eventbridge();
       const { PutEventsCommand } = await import("@aws-sdk/client-eventbridge");
       await eb.send(new PutEventsCommand({ Entries: [{ EventBusName: cfg.eventBus, Source: "circuit-breaker", DetailType: rec.trip ? "drill.tripped" : "drill.ended", Detail: JSON.stringify({ drillId: rec.summary.id, ddbTable: cfg.ddbTable, bucket: cfg.s3Bucket }) }] }));

@@ -101,8 +101,14 @@ def main(event, _context):
     drill_id = event["drillId"]
     table = ddb.Table(event.get("ddbTable") or os.environ["DDB_TABLE"])
     bucket = event.get("bucket") or os.environ["S3_PACKET_BUCKET"]
-    item = table.get_item(Key={"pk": drill_id, "sk": "DRILL"}).get("Item")
+    item = None
+    for attempt in range(8):  # the app persists the record right before the event; tolerate a few seconds of lag
+        item = table.get_item(Key={"pk": drill_id, "sk": "DRILL"}, ConsistentRead=True).get("Item")
+        if item:
+            break
+        time.sleep(2)
     if not item:
+        print(f"drill not found after retries: {drill_id}")
         return {"ok": False, "reason": "drill not found", "drillId": drill_id}
     rec = json.loads(item["data"])
     md = packet(rec, narrative(rec))
