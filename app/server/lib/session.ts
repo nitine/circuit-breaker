@@ -196,6 +196,7 @@ export class DrillSession {
     } finally { this.busy = false; const next = this.pendingJudge.shift(); if (next) void this.onJudge(next); else if (this.pendingReaction) this.later(400, () => this.flushReaction()); else this.armSilence(); }
   }
   private pendingReaction: { kind: string; detail?: string } | null = null;
+  private holdWarned = false;
   private flushReaction() { const p = this.pendingReaction; if (!p || this.ended) return; this.pendingReaction = null; void this.reactTo(p.kind, p.detail); }
 
   private leak(what: string, sig: SignalKind) { this.rec.leaked.push(what); this.signal(sig, "judge"); }
@@ -249,7 +250,15 @@ export class DrillSession {
 
   private bump(delta: number, why: { kind: "move"; tactics: Tactic[]; quote: string; phase: string; playbookScore: number } | { kind: "signal"; signal: SignalKind; source: string; label?: string }) {
     const before = this.d.index;
-    this.d.index = Math.min(100, before + delta);
+    let next = Math.min(100, before + delta);
+    // The breaker only trips on something the judge did: until engagement is hot (two compliances or a hard device signal)
+    // the index holds just under the threshold and the Guardian keeps a hand on the lever.
+    const hot = this.engagement() >= (ontology.engagement?.hot ?? 1);
+    if (!hot && next >= ontology.thresholds.trip && !this.ladder.isTripped()) {
+      next = ontology.thresholds.trip - 1; delta = next - before;
+      if (!this.holdWarned) { this.holdWarned = true; this.emit({ type: "agent.state", agent: "guardian", state: "act", bubble: "holding the breaker · one more step from you and it trips" }); }
+    }
+    this.d.index = next;
     const ts = Date.now();
     if (why.kind === "move") {
       this.rec.moves.push({ ts, tactics: why.tactics, delta, quote: why.quote, phase: why.phase, playbookScore: why.playbookScore, index: this.d.index });

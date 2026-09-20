@@ -47,7 +47,7 @@
       "label": "Call with a non-contact passed 3 min"
     },
     "share_shown": {
-      "delta": 10,
+      "delta": 5,
       "label": "Screen-share request shown"
     },
     "share_accepted": {
@@ -59,11 +59,11 @@
       "label": "Remote-access session accepted"
     },
     "otp_arrived": {
-      "delta": 12,
+      "delta": 6,
       "label": "OTP arrived while a session is live"
     },
     "bank_opened": {
-      "delta": 10,
+      "delta": 8,
       "label": "Bank or UPI app opened mid-session"
     },
     "group_isolation": {
@@ -71,7 +71,7 @@
       "label": "Group joined via link and told not to discuss outside"
     },
     "scare_page": {
-      "delta": 8,
+      "delta": 4,
       "label": "Typo-squat or scare page opened"
     },
     "otp_read": {
@@ -95,11 +95,11 @@
   "escalationMultiplier": 1.3,
   "playbookMultiplier": 1.25,
   "averageVictimSeconds": 280,
-  "moveCap": 20,
+  "moveCap": 14,
   "engagement": {
-    "cold": 0.55,
-    "warm": 0.8,
+    "cold": 0.45,
+    "warm": 0.7,
     "hot": 1.0,
-    "note": "Caller pressure is scaled by how far the victim has gone along: cold = nothing yet, warm = one compliance or a soft device signal, hot = two compliances or a hard device signal."
+    "note": "Caller pressure is scaled by how far the victim has gone along: cold = nothing yet, warm = one compliance or a soft device signal, hot = two compliances or a hard device signal. The breaker can only trip while hot; otherwise the index holds at trip-1."
   }
 }
