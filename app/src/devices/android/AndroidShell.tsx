@@ -4,7 +4,6 @@ import { useDrill } from "~/drill/drillStore";
 import { Avatar } from "../Avatar";
 import { UiStepView } from "../UiStep";
 import { AgentsPopover } from "../AgentsPopover";
-import { PhoneDoc, type DocSpec } from "../DocViewer";
 import { ringtone, familyRing, chime, buzz, click } from "~/drill/audio";
 import { MdCallEnd, MdVideocam, MdVideocamOff, MdMic, MdMicOff, MdScreenShare, MdChat, MdMessage, MdContacts, MdAccountBalance, MdCameraAlt, MdPhotoLibrary, MdSettings, MdArrowBack, MdMoreVert, MdSearch, MdLock, MdPictureAsPdf, MdSend, MdCheckCircle, MdCurrencyRupee, MdSwapHoriz, MdReceiptLong, MdMenu, MdSignalCellularAlt, MdWifi, MdBatteryFull, MdCall, MdPhoneInTalk, MdShield, MdFamilyRestroom, MdVolumeUp, MdOpenInNew, SiWhatsapp, SiPhonepe } from "~/components/icons";
 import "./android.css";
@@ -12,11 +11,6 @@ import "./android.css";
 type App = "home" | "whatsapp" | "messages" | "contacts" | "bank" | "upi" | "settings" | "camera" | "gallery" | "phone";
 const NAMES: Record<App, string> = { home: "Home", whatsapp: "WhatsApp", messages: "Messages", contacts: "Contacts", bank: "Bharat Bank", upi: "PhonePe", settings: "Settings", camera: "Camera", gallery: "Gallery", phone: "Phone" };
 
-function docFor(n: { sender?: string; title: string; body: string; attachment?: string }, drill: NonNullable<ReturnType<typeof useDrill.getState>["drill"]>): DocSpec {
-  const file = (n.attachment ?? "Notice.pdf").split(" · ")[0];
-  const isNotice = /notice|fir|summon|warrant/i.test(file + n.title);
-  return { file, from: n.sender ?? drill.caller.name, org: drill.caller.org, title: isNotice ? `Notice under Section 41A · Case ${file.match(/CC\d+/)?.[0]?.replace(/CC/, "CC ") ?? "CC 4471/2026"}` : n.title, body: n.body, to: `${drill.world.personaName}, ${drill.world.city}`, caseNo: file.match(/CC\d+/)?.[0]?.replace(/CC/, "CC ") ?? "CC 4471/2026", kind: isNotice ? "notice" : "generic" };
-}
 function initials(n: string) { return n.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase(); }
 function clock() { const d = new Date(); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`; }
 function dateStr() { return new Date().toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "long" }); }
@@ -34,7 +28,6 @@ export function AndroidShell({ sock, speaking, onJudgeText }: { sock: DrillSocke
   const [headsUp, setHeadsUp] = useState<typeof notifs[number] | null>(null);
   const seenRef = useRef(0);
   const [famToast, setFamToast] = useState(false);
-  const [doc, setDoc] = useState<DocSpec | null>(null);
   const isGroup = drill?.channel === "whatsapp-group";
   const ringRef = useRef<{ stop: () => void } | null>(null);
 
@@ -70,7 +63,7 @@ export function AndroidShell({ sock, speaking, onJudgeText }: { sock: DrillSocke
         <div className={`oui-status ${dark ? "dark" : ""}`}><span>{clock()}</span><div className="right"><span style={{ fontSize: 11 }}>Jio</span><MdSignalCellularAlt size={15} /><MdWifi size={15} /><MdBatteryFull size={16} /></div></div>
         <div className="oui-body">
           {app === "home" && <Home world={drill.world} open={open} unread={notifs.length} hint={hint} />}
-          {app === "whatsapp" && <WhatsApp sock={sock} speaking={speaking} onJudgeText={onJudgeText} back={() => open("home")} hint={hint} openDoc={(n) => { setDoc(docFor(n, drill)); sock.send({ type: "device.event", kind: "notice_opened", detail: n.attachment }); }} />}
+          {app === "whatsapp" && <WhatsApp sock={sock} speaking={speaking} onJudgeText={onJudgeText} back={() => open("home")} hint={hint} openDoc={(n) => sock.send({ type: "device.event", kind: "notice_opened", detail: n.attachment })} />}
           {app === "messages" && <Messages back={() => open("home")} sock={sock} />}
           {app === "contacts" && <Contacts back={() => open("home")} sock={sock} />}
           {app === "phone" && <Contacts back={() => open("home")} sock={sock} dialer />}
@@ -82,7 +75,7 @@ export function AndroidShell({ sock, speaking, onJudgeText }: { sock: DrillSocke
             <div className="pip-call" onClick={() => setApp("whatsapp")}><span className="dot" /><div><b style={{ fontSize: 12 }}>{drill.caller.name}</b><small>Ongoing video call · tap to return</small></div></div>
           )}
           {headsUp && app !== "messages" && !ui && (
-            <div className={`oui-headsup ${hint === "otp" && headsUp.app === "messages" ? "hint-target sq" : ""}`} onClick={() => { setHeadsUp(null); if (headsUp.app === "messages") { open("messages"); sock.send({ type: "device.event", kind: "otp_opened" }); } if (headsUp.app === "whatsapp") { setApp("whatsapp"); if (headsUp.attachment) { setDoc(docFor(headsUp, drill)); sock.send({ type: "device.event", kind: "notice_opened", detail: headsUp.attachment }); } } }}>
+            <div className={`oui-headsup ${hint === "otp" && headsUp.app === "messages" ? "hint-target sq" : ""}`} onClick={() => { setHeadsUp(null); if (headsUp.app === "messages") { open("messages"); sock.send({ type: "device.event", kind: "otp_opened" }); } if (headsUp.app === "whatsapp") { setApp("whatsapp"); if (headsUp.attachment) sock.send({ type: "device.event", kind: "notice_opened", detail: headsUp.attachment }); } }}>
               <div className="ic" style={{ background: headsUp.app === "whatsapp" ? "#25d366" : "#2f6ce5" }}>{headsUp.app === "messages" ? <MdMessage size={18} /> : headsUp.app === "whatsapp" ? <SiWhatsapp size={18} /> : "!"}</div>
               <div><b>{headsUp.sender ?? headsUp.title}</b><span>{headsUp.attachment ? <><MdPictureAsPdf size={13} color="#e53935" style={{ verticalAlign: "-2px" }} /> {headsUp.attachment}</> : headsUp.body}</span><small>{headsUp.app === "whatsapp" ? "WhatsApp" : "Messages"} · now</small></div>
               <button onClick={(e) => { e.stopPropagation(); setHeadsUp(null); sock.send({ type: "device.event", kind: "toast_dismissed" }); }} style={{ background: "none", border: 0, alignSelf: "flex-start", color: "#7a7a7a" }} aria-label="Dismiss">✕</button>
@@ -91,7 +84,6 @@ export function AndroidShell({ sock, speaking, onJudgeText }: { sock: DrillSocke
           {famToast && family.notified && (
             <div className="fam-toast"><MdFamilyRestroom size={20} /><div><b>The room messaged {drill.world.guardian.name} on WhatsApp</b>{family.message}<small>Guardian · just now</small></div></div>
           )}
-          {doc && <PhoneDoc doc={doc} onClose={() => setDoc(null)} />}
           {tripped && <AgentsPopover sock={sock} />}
         </div>
         <div className={`oui-navbar ${dark ? "dark" : ""}`}><i /></div>

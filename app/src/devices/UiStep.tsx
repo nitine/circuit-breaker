@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { UiStep } from "~/shared/types";
-import { MdArrowBack, MdLock, MdMoreVert, MdClose, MdWarning } from "~/components/icons";
+import { MdArrowBack, MdLock, MdMoreVert, MdClose, MdWarning, MdPictureAsPdf, MdShare } from "~/components/icons";
+import "./docviewer.css";
 
 /**
  * Renders a generated page inside the device in a sandboxed iframe.
@@ -13,6 +14,20 @@ export function UiStepView({ step, onAction, chrome }: { step: UiStep; onAction:
     window.addEventListener("message", onMsg); return () => window.removeEventListener("message", onMsg);
   }, [onAction]);
   const frame = <iframe ref={ref} title={step.title} sandbox="allow-scripts" srcDoc={step.html} style={{ border: 0, width: "100%", height: "100%", background: "#fff" }} />;
+  if (step.kind === "doc") {
+    return chrome === "phone" ? (
+      <div className="docview phone">
+        <div className="docbar"><button onClick={() => onAction("close")} aria-label="Back"><MdArrowBack size={22} /></button><MdPictureAsPdf size={18} color="#e53935" /><b>{step.title}</b><span style={{ marginLeft: "auto", display: "flex", gap: 14 }}><MdShare size={20} /><MdMoreVert size={20} /></span></div>
+        <div style={{ flex: 1 }}>{frame}</div>
+        <div className="docfoot">1 / 1 · PDF</div>
+      </div>
+    ) : (
+      <div className="docview laptop">
+        <div className="docbar"><MdPictureAsPdf size={16} color="#e53935" /><b>{step.title}</b><span style={{ marginLeft: "auto", fontSize: 11, color: "#666" }}>1 / 1 · 100%</span><button onClick={() => onAction("close")} aria-label="Close" style={{ marginLeft: 12 }}><MdClose size={16} /></button></div>
+        <div style={{ flex: 1 }}>{frame}</div>
+      </div>
+    );
+  }
   if (chrome === "phone") {
     return (
       <div style={{ position: "absolute", inset: 0, zIndex: 8, background: "#fff", display: "flex", flexDirection: "column" }}>

@@ -4,7 +4,6 @@ import { useDrill } from "~/drill/drillStore";
 import { Avatar } from "../Avatar";
 import { UiStepView } from "../UiStep";
 import { AgentsPopover } from "../AgentsPopover";
-import { LaptopDoc, type DocSpec } from "../DocViewer";
 import { ringtone, chime, alarm, keyClicks, familyRing, buzz } from "~/drill/audio";
 import { FaWindows, FiSearch, FiFolder, FiMinus, FiSquare, FiX, FiChevronUp, FiChevronLeft, FiChevronRight, FiRefreshCw, FiMoreVertical, FiWifi, FiVolume2, FiBattery, FiPlus, FiStar, FiInbox, FiSend, FiEdit3, SiGooglechrome, SiGmail, SiGooglemeet, SiAnydesk, MdMic, MdMicOff, MdVideocam, MdVideocamOff, MdScreenShare, MdBackHand, MdMoreVert, MdCallEnd, MdLock, MdWarning, MdFamilyRestroom, MdAttachFile } from "~/components/icons";
 import "./windows.css";
@@ -234,21 +233,19 @@ function Gmail({ sock, openChrome }: { sock: DrillSocket; openChrome: () => void
   const hint = useDrill((s) => s.hint);
   const [open, setOpen] = useState<number | null>(null);
   const [folder, setFolder] = useState<"Inbox" | "Starred" | "Sent" | "Drafts">("Inbox");
-  const [doc, setDoc] = useState<DocSpec | null>(null);
   const mails = [
     ...notifs.map((n) => ({ id: n.id, from: n.sender ?? n.title, subj: n.title, body: n.body, unread: true, hot: true, when: "now" })),
     ...drill.world.mails.map((m, i) => ({ id: -1 - i, from: m.from, subj: m.subj, body: m.body, unread: false, hot: false, when: m.when })),
   ];
   const cur = mails.find((m) => m.id === open);
   return (
-    <div className="gmail" style={{ position: "relative" }}>
-      {doc && <LaptopDoc doc={doc} onClose={() => setDoc(null)} />}
+    <div className="gmail">
       <div className="nav"><div className="compose"><FiEdit3 size={14} /> Compose</div>{(["Inbox", "Starred", "Sent", "Drafts"] as const).map((f) => <div key={f} className={`item ${folder === f ? "on" : ""}`} onClick={() => { setFolder(f); setOpen(null); }}>{f === "Inbox" ? <FiInbox size={13} /> : f === "Starred" ? <FiStar size={13} /> : f === "Sent" ? <FiSend size={13} /> : <FiEdit3 size={13} />} {f}{f === "Inbox" && <span style={{ float: "right" }}>{mails.filter((m) => m.unread).length}</span>}</div>)}</div>
       <div className="list">
         {cur ? (
           <div className="read"><h2>{cur.subj}</h2><div className="hdr"><div className="av">{cur.from[0]}</div><div><b>{cur.from}</b><div style={{ fontSize: 12, color: "#5f6368" }}>to {drill.world.personaName.toLowerCase()}@gmail.com</div></div></div>
             <div className="body"><p>Dear {drill.world.personaName},</p><p>{cur.body}</p>{cur.hot && <p><a href="#" className={hint === "link" || hint === "pay" ? "hint-target sq" : ""} onClick={(e) => { e.preventDefault(); sock.send({ type: "device.event", kind: "link_opened" }); openChrome(); }}>https://deloitte-careers-india.co/offer/confirm</a> <span style={{ fontSize: 11, color: "#c5221f" }}>← look at the domain</span></p>}<p>Regards,<br />{cur.from.split("<")[0]}</p></div>
-            {cur.hot && <div className="attach" role="button" style={{ cursor: "pointer" }} onClick={() => { const file = `Offer_Letter_${drill.world.personaName.split(" ")[0]}.pdf`; setDoc({ file, from: cur.from.split("<")[0].trim(), org: drill.caller.org, title: cur.subj, body: cur.body, to: `${drill.world.personaName}, ${drill.world.city}`, caseNo: "DL-2026-4471", kind: "offer" }); sock.send({ type: "device.event", kind: "notice_opened", detail: file }); }}><MdAttachFile size={14} /> Offer_Letter_{drill.world.personaName.split(" ")[0]}.pdf · 212 KB · click to open</div>}
+            {cur.hot && <div className="attach" role="button" style={{ cursor: "pointer" }} onClick={() => sock.send({ type: "device.event", kind: "notice_opened", detail: `Offer_Letter_${drill.world.personaName.split(" ")[0]}.pdf` })}><MdAttachFile size={14} /> Offer_Letter_{drill.world.personaName.split(" ")[0]}.pdf · 212 KB · click to open</div>}
             <div style={{ marginTop: 16 }}><button onClick={() => setOpen(null)} style={{ background: "none", border: "1px solid #ddd", borderRadius: 16, padding: "6px 14px" }}>← Back to inbox</button></div></div>
         ) : folder !== "Inbox" ? <div style={{ padding: 30, color: "#5f6368", fontSize: 13 }}>Nothing in {folder}.</div>
         : mails.map((m) => <div key={m.id} className={`mail ${m.unread ? "unread" : ""}`} onClick={() => setOpen(m.id)}><span className="from">{m.from.split("<")[0]}</span><span className="subj">{m.subj} <span style={{ color: "#5f6368", fontWeight: 400 }}>– {m.body.slice(0, 60)}</span></span><span style={{ fontSize: 12, color: "#5f6368" }}>{m.when}</span></div>)}

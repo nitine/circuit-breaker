@@ -58,7 +58,7 @@
 .drill .stage { flex: 1; position: relative; display: grid; grid-template-columns: 1fr; transition: grid-template-columns 1.2s cubic-bezier(.4,0,.2,1); overflow: hidden; }
 /* the room column is sized so the 16:9 room plus its log and console fill the viewport height; the device gets the rest (never under 440px) */
 .drill .stage.split { grid-template-columns: minmax(440px, 1fr) min(calc((100dvh - 250px) * 16 / 9), calc(100vw - 440px)); }
-.drill .stage.split.laptop { grid-template-columns: minmax(740px, 1fr) min(calc((100dvh - 250px) * 16 / 9), calc(100vw - 740px)); }
+.drill .stage.split.laptop { grid-template-columns: minmax(880px, 1fr) min(calc((100dvh - 250px) * 16 / 9), calc(100vw - 880px)); }
 .drill .stage.hard { grid-template-columns: 1fr; }
 .drill .roomcol { position: relative; overflow: hidden; background: #2a1d10; display: flex; flex-direction: column; }
 .drill .roomcol .room-frame { width: 100%; height: auto; }

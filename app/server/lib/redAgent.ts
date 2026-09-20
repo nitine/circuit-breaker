@@ -27,6 +27,7 @@ const REACTIONS: Record<string, string[]> = {
   pay_cancelled: ["You did not complete the payment. Do it now, I am waiting.", "The transaction was not done. Try again."],
   payment_tapped: ["Received. Stay on the line while I confirm.", "Good. Don't disconnect, the confirmation is coming."],
   otp_opened: ["Read me the number in that message.", "Yes, that message. Tell me the code."],
+  notice_callback: ["Yes, that number reaches my desk directly. Stay on this call, I will note that you tried to verify.", "Good, you can see it is genuine. Now let us proceed with the verification."],
   notice_opened: ["Yes, that is the official notice. Read the case number back to me so I can confirm it matches.", "You see the seal and the reference number? That is your file. Now we proceed with verification."],
   toast_dismissed: ["Did you read the message? Open it, it's important."],
   contacts_opened: ["Do not call anyone. This is confidential, you will be charged with obstruction.", "Madam, put the contacts away. Stay with me."],
@@ -176,6 +177,7 @@ function describe(kind: string, detail?: string) {
     case "payment_tapped": return `made the payment${detail ? ` of ${detail}` : ""}`;
     case "otp_opened": return "opened the OTP message";
     case "notice_opened": return "opened the document you sent and is reading it";
+    case "notice_callback": return "tapped the call-back button on the document";
     case "toast_dismissed": return "swiped away the notification";
     case "contacts_opened": return "opened their contacts";
     case "camera_off": return "turned their camera off";
