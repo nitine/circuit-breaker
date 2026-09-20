@@ -19,6 +19,8 @@ import * as path from "node:path";
 import { Construct } from "constructs";
 
 export interface CbProps extends cdk.StackProps {
+  /** Put CloudFront in front of the ALB (default true). */
+  edge?: boolean;
   bedrockRegion: string; redModel: string; analystModel: string; guardrailId?: string; guardrailVersion?: string;
 }
 
@@ -107,17 +109,22 @@ export class CircuitBreakerStack extends cdk.Stack {
     role.addToPrincipalPolicy(new iam.PolicyStatement({ actions: ["cloudwatch:PutMetricData"], resources: ["*"] }));
 
     // Edge: CloudFront gives HTTPS (the mic needs a secure origin) and carries the WebSocket.
-    const dist = new cloudfront.Distribution(this, "Edge", {
-      defaultBehavior: {
-        origin: new origins.LoadBalancerV2Origin(service.loadBalancer, { protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY, readTimeout: cdk.Duration.seconds(60), keepaliveTimeout: cdk.Duration.seconds(60) }),
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
-        cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
-        originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER,
-      },
-      httpVersion: cloudfront.HttpVersion.HTTP2_AND_3,
-      priceClass: cloudfront.PriceClass.PRICE_CLASS_200,
-    });
+    // Optional (CB_EDGE=0): a brand-new AWS account cannot create CloudFront resources until Support verifies it.
+    let siteUrl = `http://${service.loadBalancer.loadBalancerDnsName}`;
+    if (props.edge !== false) {
+      const dist = new cloudfront.Distribution(this, "Edge", {
+        defaultBehavior: {
+          origin: new origins.LoadBalancerV2Origin(service.loadBalancer, { protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY, readTimeout: cdk.Duration.seconds(60), keepaliveTimeout: cdk.Duration.seconds(60) }),
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER,
+        },
+        httpVersion: cloudfront.HttpVersion.HTTP2_AND_3,
+        priceClass: cloudfront.PriceClass.PRICE_CLASS_200,
+      });
+      siteUrl = `https://${dist.distributionDomainName}`;
+    }
 
     // One dashboard for the latency budget and spend-adjacent counters.
     const dash = new cw.Dashboard(this, "Dashboard", { dashboardName: "circuit-breaker" });
@@ -128,7 +135,7 @@ export class CircuitBreakerStack extends cdk.Stack {
       new cw.GraphWidget({ title: "Packet pipeline", left: [machine.metricStarted(), machine.metricFailed()] }),
     );
 
-    new cdk.CfnOutput(this, "Url", { value: `https://${dist.distributionDomainName}` });
+    new cdk.CfnOutput(this, "Url", { value: siteUrl });
     new cdk.CfnOutput(this, "AlbUrl", { value: `http://${service.loadBalancer.loadBalancerDnsName}` });
     new cdk.CfnOutput(this, "TableName", { value: table.tableName });
     new cdk.CfnOutput(this, "BucketName", { value: bucket.bucketName });

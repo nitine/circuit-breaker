@@ -13,6 +13,7 @@ new CircuitBreakerStack(app, "CircuitBreaker", {
   analystModel: process.env.BEDROCK_ANALYST_MODEL_ID ?? "global.anthropic.claude-haiku-4-5-20251001-v1:0",
   guardrailId: process.env.BEDROCK_GUARDRAIL_ID,
   guardrailVersion: process.env.BEDROCK_GUARDRAIL_VERSION,
+  edge: process.env.CB_EDGE !== "0",
 });
 // Billing metrics only exist in us-east-1.
 new BillingAlarmsStack(app, "CircuitBreakerBilling", { env: { account, region: "us-east-1" }, thresholds: [60, 100, 140] });
