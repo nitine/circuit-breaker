@@ -16,7 +16,7 @@ type Send = (e: ServerEvent) => void;
 type WithoutSeq<T> = T extends unknown ? Omit<T, "seq"> : never;
 type Timer = ReturnType<typeof setTimeout>;
 
-const REACTIVE = new Set(["share_shown", "share_accepted", "share_dismissed", "remote_shown", "remote_accepted", "remote_dismissed", "app_opened", "app_left", "window_closed", "link_opened", "link_dismissed", "pay_cancelled", "payment_tapped", "otp_opened", "toast_dismissed", "contacts_opened", "camera_off", "muted"]);
+const REACTIVE = new Set(["notice_opened", "share_shown", "share_accepted", "share_dismissed", "remote_shown", "remote_accepted", "remote_dismissed", "app_opened", "app_left", "window_closed", "link_opened", "link_dismissed", "pay_cancelled", "payment_tapped", "otp_opened", "toast_dismissed", "contacts_opened", "camera_off", "muted"]);
 const SIGNALS: Record<string, SignalKind> = { share_shown: "share_shown", share_accepted: "share_accepted", remote_accepted: "remote_accepted", link_opened: "scare_page", group_joined: "group_isolation", payment_tapped: "payment_tapped" };
 
 export class DrillSession {

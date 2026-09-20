@@ -1,0 +1,23 @@
+.docview { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; background: #525659; color: #111; }
+.docview.laptop { position: absolute; inset: 0; }
+.docbar { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #323639; color: #fff; font-size: 13px; }
+.docbar b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
+.docbar button { background: none; border: 0; color: #fff; display: grid; place-items: center; }
+.docscroll { flex: 1; overflow: auto; padding: 12px; }
+.docfoot { text-align: center; font-size: 11px; color: #ccc; padding: 6px; background: #323639; }
+.docpage { background: #fff; color: #111; padding: 22px 20px 26px; box-shadow: 0 2px 8px #0006; font-family: "Courier Prime", "Courier New", monospace; font-size: 12.5px; line-height: 1.55; position: relative; }
+.docview.laptop .docpage { max-width: 620px; margin: 0 auto; padding: 36px 40px; font-size: 13.5px; }
+.doc-head { display: flex; gap: 12px; align-items: center; border-bottom: 2px solid #111; padding-bottom: 10px; margin-bottom: 8px; }
+.doc-emblem { width: 40px; height: 40px; border: 2px solid #111; border-radius: 50%; display: grid; place-items: center; font-size: 20px; }
+.doc-head b { display: block; font-family: Inter, Arial, sans-serif; font-size: 14px; letter-spacing: .5px; }
+.doc-head small { color: #444; font-family: Inter, Arial, sans-serif; font-size: 11px; }
+.doc-ref { display: flex; justify-content: space-between; font-size: 11px; color: #333; margin-bottom: 14px; }
+.docpage h1 { font-family: Inter, Arial, sans-serif; font-size: 15px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px; text-decoration: underline; }
+.docpage p { margin: 0 0 10px; color: #111; }
+.doc-to { margin-bottom: 14px !important; }
+.doc-seal { position: absolute; right: 18px; top: 96px; transform: rotate(-12deg); border: 3px solid #c0392b; color: #c0392b; font-family: Inter, Arial, sans-serif; font-weight: 800; font-size: 12px; letter-spacing: 1.5px; padding: 6px 10px; opacity: .85; }
+.doc-sign { margin-top: 22px; display: flex; flex-direction: column; gap: 2px; }
+.doc-sign i { display: block; width: 120px; height: 28px; border-bottom: 1px solid #111; background: linear-gradient(120deg, transparent 40%, #1a2a6c 41%, transparent 43%, transparent 55%, #1a2a6c 56%, transparent 58%); }
+.doc-sign span { font-family: Inter, Arial, sans-serif; font-weight: 700; font-size: 12px; }
+.doc-sign small { color: #444; font-size: 11px; }
+.doc-warn { margin-top: 18px; background: #fff3cd; color: #7a5a00; font-family: Inter, Arial, sans-serif; font-size: 11px; padding: 8px 10px; border-radius: 4px; line-height: 1.4; }

@@ -4,6 +4,7 @@ import { useDrill } from "~/drill/drillStore";
 import { Avatar } from "../Avatar";
 import { UiStepView } from "../UiStep";
 import { AgentsPopover } from "../AgentsPopover";
+import { PhoneDoc, type DocSpec } from "../DocViewer";
 import { ringtone, familyRing, chime, buzz, click } from "~/drill/audio";
 import { MdCallEnd, MdVideocam, MdVideocamOff, MdMic, MdMicOff, MdScreenShare, MdChat, MdMessage, MdContacts, MdAccountBalance, MdCameraAlt, MdPhotoLibrary, MdSettings, MdArrowBack, MdMoreVert, MdSearch, MdLock, MdPictureAsPdf, MdSend, MdCheckCircle, MdCurrencyRupee, MdSwapHoriz, MdReceiptLong, MdMenu, MdSignalCellularAlt, MdWifi, MdBatteryFull, MdCall, MdPhoneInTalk, MdShield, MdFamilyRestroom, MdVolumeUp, MdOpenInNew, SiWhatsapp, SiPhonepe } from "~/components/icons";
 import "./android.css";
@@ -11,6 +12,11 @@ import "./android.css";
 type App = "home" | "whatsapp" | "messages" | "contacts" | "bank" | "upi" | "settings" | "camera" | "gallery" | "phone";
 const NAMES: Record<App, string> = { home: "Home", whatsapp: "WhatsApp", messages: "Messages", contacts: "Contacts", bank: "Bharat Bank", upi: "PhonePe", settings: "Settings", camera: "Camera", gallery: "Gallery", phone: "Phone" };
 
+function docFor(n: { sender?: string; title: string; body: string; attachment?: string }, drill: NonNullable<ReturnType<typeof useDrill.getState>["drill"]>): DocSpec {
+  const file = (n.attachment ?? "Notice.pdf").split(" · ")[0];
+  const isNotice = /notice|fir|summon|warrant/i.test(file + n.title);
+  return { file, from: n.sender ?? drill.caller.name, org: drill.caller.org, title: isNotice ? `Notice under Section 41A · Case ${file.match(/CC\d+/)?.[0]?.replace(/CC/, "CC ") ?? "CC 4471/2026"}` : n.title, body: n.body, to: `${drill.world.personaName}, ${drill.world.city}`, caseNo: file.match(/CC\d+/)?.[0]?.replace(/CC/, "CC ") ?? "CC 4471/2026", kind: isNotice ? "notice" : "generic" };
+}
 function initials(n: string) { return n.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase(); }
 function clock() { const d = new Date(); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`; }
 function dateStr() { return new Date().toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "long" }); }
@@ -28,6 +34,7 @@ export function AndroidShell({ sock, speaking, onJudgeText }: { sock: DrillSocke
   const [headsUp, setHeadsUp] = useState<typeof notifs[number] | null>(null);
   const seenRef = useRef(0);
   const [famToast, setFamToast] = useState(false);
+  const [doc, setDoc] = useState<DocSpec | null>(null);
   const isGroup = drill?.channel === "whatsapp-group";
   const ringRef = useRef<{ stop: () => void } | null>(null);
 
@@ -63,7 +70,7 @@ export function AndroidShell({ sock, speaking, onJudgeText }: { sock: DrillSocke
         <div className={`oui-status ${dark ? "dark" : ""}`}><span>{clock()}</span><div className="right"><span style={{ fontSize: 11 }}>Jio</span><MdSignalCellularAlt size={15} /><MdWifi size={15} /><MdBatteryFull size={16} /></div></div>
         <div className="oui-body">
           {app === "home" && <Home world={drill.world} open={open} unread={notifs.length} hint={hint} />}
-          {app === "whatsapp" && <WhatsApp sock={sock} speaking={speaking} onJudgeText={onJudgeText} back={() => open("home")} hint={hint} />}
+          {app === "whatsapp" && <WhatsApp sock={sock} speaking={speaking} onJudgeText={onJudgeText} back={() => open("home")} hint={hint} openDoc={(n) => { setDoc(docFor(n, drill)); sock.send({ type: "device.event", kind: "notice_opened", detail: n.attachment }); }} />}
           {app === "messages" && <Messages back={() => open("home")} sock={sock} />}
           {app === "contacts" && <Contacts back={() => open("home")} sock={sock} />}
           {app === "phone" && <Contacts back={() => open("home")} sock={sock} dialer />}
@@ -75,15 +82,16 @@ export function AndroidShell({ sock, speaking, onJudgeText }: { sock: DrillSocke
             <div className="pip-call" onClick={() => setApp("whatsapp")}><span className="dot" /><div><b style={{ fontSize: 12 }}>{drill.caller.name}</b><small>Ongoing video call · tap to return</small></div></div>
           )}
           {headsUp && app !== "messages" && !ui && (
-            <div className={`oui-headsup ${hint === "otp" && headsUp.app === "messages" ? "hint-target sq" : ""}`} onClick={() => { setHeadsUp(null); if (headsUp.app === "messages") { open("messages"); sock.send({ type: "device.event", kind: "otp_opened" }); } if (headsUp.app === "whatsapp") setApp("whatsapp"); }}>
+            <div className={`oui-headsup ${hint === "otp" && headsUp.app === "messages" ? "hint-target sq" : ""}`} onClick={() => { setHeadsUp(null); if (headsUp.app === "messages") { open("messages"); sock.send({ type: "device.event", kind: "otp_opened" }); } if (headsUp.app === "whatsapp") { setApp("whatsapp"); if (headsUp.attachment) { setDoc(docFor(headsUp, drill)); sock.send({ type: "device.event", kind: "notice_opened", detail: headsUp.attachment }); } } }}>
               <div className="ic" style={{ background: headsUp.app === "whatsapp" ? "#25d366" : "#2f6ce5" }}>{headsUp.app === "messages" ? <MdMessage size={18} /> : headsUp.app === "whatsapp" ? <SiWhatsapp size={18} /> : "!"}</div>
-              <div><b>{headsUp.sender ?? headsUp.title}</b><span>{headsUp.attachment ? `📎 ${headsUp.attachment}` : headsUp.body}</span><small>{headsUp.app === "whatsapp" ? "WhatsApp" : "Messages"} · now</small></div>
+              <div><b>{headsUp.sender ?? headsUp.title}</b><span>{headsUp.attachment ? <><MdPictureAsPdf size={13} color="#e53935" style={{ verticalAlign: "-2px" }} /> {headsUp.attachment}</> : headsUp.body}</span><small>{headsUp.app === "whatsapp" ? "WhatsApp" : "Messages"} · now</small></div>
               <button onClick={(e) => { e.stopPropagation(); setHeadsUp(null); sock.send({ type: "device.event", kind: "toast_dismissed" }); }} style={{ background: "none", border: 0, alignSelf: "flex-start", color: "#7a7a7a" }} aria-label="Dismiss">✕</button>
             </div>
           )}
           {famToast && family.notified && (
             <div className="fam-toast"><MdFamilyRestroom size={20} /><div><b>The room messaged {drill.world.guardian.name} on WhatsApp</b>{family.message}<small>Guardian · just now</small></div></div>
           )}
+          {doc && <PhoneDoc doc={doc} onClose={() => setDoc(null)} />}
           {tripped && <AgentsPopover sock={sock} />}
         </div>
         <div className={`oui-navbar ${dark ? "dark" : ""}`}><i /></div>
@@ -120,7 +128,7 @@ function Home({ world, open, unread, hint }: { world: NonNullable<ReturnType<typ
 
 function AutoScroll({ dep }: { dep: unknown }) { const r = useRef<HTMLDivElement>(null); useEffect(() => { const el = r.current?.parentElement; if (el) el.scrollTop = el.scrollHeight; }, [dep]); return <div ref={r} />; }
 
-function WhatsApp({ sock, speaking, onJudgeText, back, hint }: { sock: DrillSocket; speaking: boolean; onJudgeText: (t: string) => void; back: () => void; hint: string | null }) {
+function WhatsApp({ sock, speaking, onJudgeText, back, hint, openDoc }: { sock: DrillSocket; speaking: boolean; onJudgeText: (t: string) => void; back: () => void; hint: string | null; openDoc: (n: { sender?: string; title: string; body: string; attachment?: string }) => void }) {
   const drill = useDrill((s) => s.drill)!;
   const callState = useDrill((s) => s.callState);
   const chat = useDrill((s) => s.chat);
@@ -202,7 +210,7 @@ function WhatsApp({ sock, speaking, onJudgeText, back, hint }: { sock: DrillSock
             <div className="wa-header"><button onClick={() => setView("call")} style={{ color: "#fff", background: "none", border: 0 }} aria-label="Back"><MdArrowBack size={22} /></button><div className="av">{initials(drill.caller.name)}</div><div className="t"><b>{drill.caller.name}</b><span>on a video call · tap to return</span></div></div>
             <div className="wa-thread">
               <div className="wa-msg sys"><MdLock size={11} /> Messages and calls are end-to-end encrypted.</div>
-              {notifs.map((n) => <div key={n.id} className="wa-msg"><span className="who" style={{ color: "#128c7e" }}>{n.sender}</span>{n.attachment && <div style={{ background: "#f0f0f0", borderRadius: 6, padding: "8px 10px", margin: "4px 0", display: "flex", gap: 8, alignItems: "center" }}><MdPictureAsPdf size={26} color="#e53935" /><div><b style={{ fontSize: 12 }}>{n.attachment.split(" · ")[0]}</b><div style={{ fontSize: 10, color: "#666" }}>{n.attachment.split(" · ").slice(1).join(" · ")}</div></div></div>}{n.body}<span className="meta">{clock()}</span></div>)}
+              {notifs.map((n) => <div key={n.id} className="wa-msg"><span className="who" style={{ color: "#128c7e" }}>{n.sender}</span>{n.attachment && <div className="wa-attach" role="button" onClick={() => openDoc(n)}><MdPictureAsPdf size={26} color="#e53935" /><div><b>{n.attachment.split(" · ")[0]}</b><div>{n.attachment.split(" · ").slice(1).join(" · ")} · tap to open</div></div></div>}{n.body}<span className="meta">{clock()}</span></div>)}
               {!notifs.length && <div className="wa-msg sys">No messages yet.</div>}
               <AutoScroll dep={notifs.length + chat.length} />
             </div>
@@ -238,7 +246,7 @@ function WhatsApp({ sock, speaking, onJudgeText, back, hint }: { sock: DrillSock
       </div>
     );
   }
-  const threads = [...(notifs.length ? [{ name: drill.caller.name, last: `📎 ${notifs[notifs.length - 1].attachment ?? notifs[notifs.length - 1].body}`, time: "now" }] : []), ...drill.world.chats];
+  const threads = [...(notifs.length ? [{ name: drill.caller.name, last: `PDF · ${notifs[notifs.length - 1].attachment?.split(" · ")[0] ?? notifs[notifs.length - 1].body}`, time: "now" }] : []), ...drill.world.chats];
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <div className="wa-header"><div className="t"><b>WhatsApp</b></div><span style={{ marginLeft: "auto", display: "flex", gap: 14 }}><MdCameraAlt size={20} /><MdSearch size={20} /><MdMoreVert size={20} /></span></div>
