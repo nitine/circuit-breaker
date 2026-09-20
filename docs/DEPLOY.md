@@ -55,6 +55,23 @@ The first deploy takes about 15 minutes, most of it CloudFront. Outputs:
 
 Open `Url`, start a drill, allow the microphone. The console at the bottom of the drill page shows `caller: Amazon Polly` and `you: Amazon Transcribe` when the pipeline is live.
 
+## 3b. Fallback caller brain (OpenRouter or Groq)
+
+Bedrock is the first choice. If it refuses (new account, model access pending), the app falls back to any OpenAI-compatible endpoint, and switches back to Bedrock on its own once it answers (`LLM_PROVIDER=auto`). The endpoint and models are plain task environment; the key lives in Secrets Manager.
+
+```bash
+# 1. deploy once with the endpoint (defaults: OpenRouter + deepseek/deepseek-v4-flash)
+LLM_BASE_URL=https://openrouter.ai/api/v1 LLM_MODEL=deepseek/deepseek-v4-flash LLM_ANALYST_MODEL=deepseek/deepseek-v4-flash npm run deploy
+
+# 2. put the key in the secret the stack created (never in the repo or the task definition)
+aws secretsmanager put-secret-value --region ap-south-1 --secret-id circuit-breaker/llm --secret-string '{"LLM_API_KEY":"sk-or-v1-..."}'
+
+# 3. restart the task so it reads the new secret value
+aws ecs update-service --region ap-south-1 --cluster <cluster from the console> --service <service> --force-new-deployment
+```
+
+Groq: `LLM_BASE_URL=https://api.groq.com/openai/v1 LLM_MODEL=openai/gpt-oss-120b`. Cost on OpenRouter with DeepSeek V4 Flash is about $0.25 per 200 drills.
+
 ## 4. What the stack does at runtime
 
 ```
