@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { AgentName } from "~/shared/types";
-import { RoomCanvas, hitTest } from "./RoomCanvas";
+import { RoomCanvas, hitTest, litAgent } from "./RoomCanvas";
 import { sim, useRoom } from "./roomStore";
 import { W, H, OBJ, AGENT_LABEL } from "./layout";
 const AGENT_COLOR: Record<AgentName, string> = { listener: "#2fa7d9", analyst: "#e4572e", archivist: "#b58b3a", guardian: "#1db954", reporter: "#9b6bd6" };
@@ -8,8 +8,8 @@ const AGENT_ROLE: Record<AgentName, string> = { listener: "hears you", analyst: 
 const AGENT_SERVICE_SHORT: Record<AgentName, string> = { listener: "Amazon Transcribe", analyst: "Bedrock + Guardrails", archivist: "Playbook corpus", guardian: "Escalation ladder + Polly", reporter: "Strands on Lambda" };
 import { SCENE } from "./scene";
 
-export function Room({ children, camera = "none", showHud = false, interactiveHover, onHover, className = "", hideBubblesLeftOf = 0, tooltips = false, parallax = false }: {
-  children?: ReactNode; camera?: "none" | "push" | "desk"; showHud?: boolean; interactiveHover?: boolean; onHover?: (o: string | null) => void; className?: string; hideBubblesLeftOf?: number; tooltips?: boolean; parallax?: boolean;
+export function Room({ children, camera = "none", showHud = false, interactiveHover, onHover, highlight, className = "", hideBubblesLeftOf = 0, tooltips = false, parallax = false }: {
+  children?: ReactNode; camera?: "none" | "push" | "desk"; showHud?: boolean; interactiveHover?: boolean; onHover?: (o: string | null) => void; highlight?: string | null; className?: string; hideBubblesLeftOf?: number; tooltips?: boolean; parallax?: boolean;
 }) {
   const frameRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -28,7 +28,8 @@ export function Room({ children, camera = "none", showHud = false, interactiveHo
   const tags = useRoom((s) => s.tags);
   const phase = useRoom((s) => s.phase);
   const want = useRoom((s) => s.want);
-  const showTags = mode === "attract" || mode === "dimmed" || mode === "live" || mode === "tripped";
+  const showTags = mode === "attract" || mode === "dimmed" || mode === "live" || mode === "tripped" || mode === "exploded";
+  const exploded = mode === "exploded";
   const liveRoom = mode === "live" || mode === "tripped";
 
   useEffect(() => {
@@ -70,7 +71,7 @@ export function Room({ children, camera = "none", showHud = false, interactiveHo
   return (
     <div ref={frameRef} className={`room-frame ${mode === "dimmed" ? "dimmed" : ""} ${className}`} onMouseMove={tooltips || parallax ? onMove : undefined} onMouseLeave={() => { setTip(null); setPar({ x: 0, y: 0 }); }}>
       <div className={`room-cam ${camera === "push" ? "push" : camera === "desk" ? "desk" : ""}`} style={parallax ? { transform: `translate(${par.x}px, ${par.y}px) scale(1.03)` } : undefined}>
-        <RoomCanvas interactiveHover={interactiveHover} onHover={onHover} />
+        <RoomCanvas interactiveHover={interactiveHover} onHover={onHover} highlight={highlight} />
         <div className="room-overlay" style={{ transform: "none" }}>
           {(Object.keys(sim.agents) as AgentName[]).map((a) => {
             const b = bubbles[a]; const ag = sim.agents[a];
@@ -83,7 +84,7 @@ export function Room({ children, camera = "none", showHud = false, interactiveHo
             return (
               <div key={a}>
                 {showTags && ag.x >= hideBubblesLeftOf && (
-                  <div className={`nametag ${live ? `t-${tg.tone}` : ""} ${busy ? "busy" : ""}`} style={{ left, top: headY - 8 * scale, fontSize: Math.max(8, Math.min(11, 13 * scale)), ["--c" as string]: AGENT_COLOR[a] }}>
+                  <div className={`nametag ${live ? `t-${tg.tone}` : ""} ${busy ? "busy" : ""} ${exploded && highlight ? (litAgent(highlight, a) ? "lit" : "dim") : ""}`} style={{ left, top: headY - 8 * scale, fontSize: Math.max(8, Math.min(11, 13 * scale)), ["--c" as string]: AGENT_COLOR[a] }}>
                     <span className="nm"><i />{AGENT_LABEL[a].toUpperCase()}</span>
                     <span className="st">{live ? tg.text : AGENT_ROLE[a]}</span>
                   </div>

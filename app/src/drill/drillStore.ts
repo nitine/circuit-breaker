@@ -26,20 +26,22 @@ interface DrillState {
   hint: UiHint;
   phase: string;
   ui: UiStep | null;
-  voice: { tts: "polly" | "piper" | "browser" | "captions"; stt: "transcribe" | "vosk" | "browser" | "typed"; note?: string };
+  voice: { tts: "polly" | "piper" | "browser" | "captions"; stt: "transcribe" | "vosk" | "browser" | "typed"; note?: string; micOn: boolean; micLevel: number };
+  /** Set by the drill page so the device shells can toggle the real microphone. */
+  toggleMic: (() => void) | null;
   set: (p: Partial<DrillState>) => void;
   apply: (e: ServerEvent) => void;
   pushChat: (m: Omit<ChatMsg, "id" | "ts">) => void;
   reset: () => void;
 }
 let idc = 1;
-const initial = { drill: null, connected: false, callState: "idle" as const, chat: [] as ChatMsg[], notifs: [] as Notif[], transcript: [] as DrillState["transcript"], partial: "", scammerSpeaking: false, lastScammerLine: "", hearing: 0, stance: null as Stance | null, family: { notified: false } as DrillState["family"], tripped: false, ended: null, packetUrl: null, packetPercent: 0, moves: [] as DrillState["moves"], index: 0, hint: null as UiHint, phase: "", ui: null as UiStep | null, voice: { tts: "captions" as const, stt: "typed" as const } };
+const initial = { drill: null, connected: false, callState: "idle" as const, chat: [] as ChatMsg[], notifs: [] as Notif[], transcript: [] as DrillState["transcript"], partial: "", scammerSpeaking: false, lastScammerLine: "", hearing: 0, stance: null as Stance | null, family: { notified: false } as DrillState["family"], tripped: false, ended: null, packetUrl: null, packetPercent: 0, moves: [] as DrillState["moves"], index: 0, hint: null as UiHint, phase: "", ui: null as UiStep | null, voice: { tts: "captions" as const, stt: "typed" as const, micOn: false, micLevel: 0 }, toggleMic: null as (() => void) | null };
 
 export const useDrill = create<DrillState>((set) => ({
   ...initial,
   set: (p) => set(p),
   pushChat: (m) => set((s) => ({ chat: [...s.chat, { ...m, id: idc++, ts: Date.now() }] })),
-  reset: () => set({ ...initial, family: { notified: false } }),
+  reset: () => set((s) => ({ ...initial, family: { notified: false }, toggleMic: s.toggleMic })),
   apply: (e) => {
     switch (e.type) {
       case "drill.state": set({ drill: e.drill, index: e.drill.index, tripped: e.drill.ladder === "tripped" }); break;

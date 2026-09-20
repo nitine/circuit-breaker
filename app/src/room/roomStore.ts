@@ -89,7 +89,7 @@ export const useRoom = create<RoomState>((set, get) => ({
       case "playbook.match": {
         const cur = get().phase?.label;
         const label = `${e.phase.toUpperCase()} · ${e.family}`;
-        if (cur !== label) { set({ phase: { label, until: Date.now() + 6000 } }); tag("archivist", `phase: ${e.phase}`, "info", 5000); log("archivist", `playbook phase → ${e.phase} (${Math.round(e.score * 100)}% match)`, "info"); }
+        if (cur !== label) { set({ phase: { label, until: Date.now() + 6000 } }); tag("archivist", `phase: ${e.phase}`, "info", 5000); log("archivist", `playbook phase → ${e.phase}${e.score >= 0.5 ? ` · ${Math.round(e.score * 100)}% on script` : " · improvising"}`, "info"); }
         enqueue("archivist", go(S.cabinet), act(900), home); set({ drawerOpen: true, cabinetUntil: Date.now() + 1800 }); break;
       }
       case "signal.fired": {

@@ -23,8 +23,8 @@ Defaults, all overridable with environment variables at deploy time:
 | --- | --- | --- |
 | `CB_REGION` | `ap-south-1` | Where the stack lives |
 | `BEDROCK_REGION` | same as `CB_REGION` | Bedrock calls. Set to `us-east-1` if Mumbai has no access to your models |
-| `BEDROCK_MODEL_ID` | `apac.anthropic.claude-sonnet-4-20250514-v1:0` | The caller (red agent). Inference-profile ID: Mumbai has no on-demand Claude, so use the `apac.` or `global.` profile |
-| `BEDROCK_ANALYST_MODEL_ID` | `global.anthropic.claude-haiku-4-5-20251001-v1:0` | Analyst tagging, world builder, generated pages, Reporter |
+| `BEDROCK_MODEL_ID` | `openai.gpt-oss-120b-1:0` | The caller (red agent). Open-weight, no use-case form. For Claude use `apac.anthropic.claude-sonnet-4-20250514-v1:0` after the Anthropic use-case form is approved |
+| `BEDROCK_ANALYST_MODEL_ID` | `amazon.nova-lite-v1:0` | Analyst tagging, world builder, generated pages, Reporter. `global.anthropic.claude-haiku-4-5-20251001-v1:0` once Anthropic is approved |
 | `BEDROCK_GUARDRAIL_ID` / `BEDROCK_GUARDRAIL_VERSION` | unset | Optional Guardrail attached to the caller |
 | `ALARM_EMAIL` | unset | Billing alarm notifications |
 

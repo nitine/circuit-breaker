@@ -119,12 +119,19 @@ export class Mic {
       const hot = now < this.hangover; if (hot !== this.hot) { this.hot = hot; this.onHot?.(hot); }
       if (!hot) return;
       const outLen = Math.floor(input.length / ratio); const out = new Int16Array(outLen);
-      for (let i = 0; i < outLen; i++) { const s = Math.max(-1, Math.min(1, input[Math.floor(i * ratio)])); out[i] = s < 0 ? s * 0x8000 : s * 0x7fff; }
+      for (let i = 0; i < outLen; i++) { // box-filter downsample: average the source samples that map onto this output sample
+        const a = Math.floor(i * ratio), b = Math.max(a + 1, Math.floor((i + 1) * ratio)); let acc = 0; for (let j = a; j < b && j < input.length; j++) acc += input[j];
+        const s = Math.max(-1, Math.min(1, acc / (b - a))); out[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+      }
       this.onChunk(out.buffer);
     };
-    this.src.connect(this.proc); this.proc.connect(c.destination);
+    // A ScriptProcessor only runs when connected to the graph; route it through a muted gain so the mic never plays back into the speakers.
+    this.sink = c.createGain(); this.sink.gain.value = 0;
+    this.src.connect(this.proc); this.proc.connect(this.sink); this.sink.connect(c.destination);
   }
-  stop() { this.proc?.disconnect(); this.src?.disconnect(); this.stream?.getTracks().forEach((t) => t.stop()); this.proc = null; this.src = null; this.stream = null; }
+  private sink: GainNode | null = null;
+  get active() { return Boolean(this.stream); }
+  stop() { this.proc?.disconnect(); this.src?.disconnect(); this.sink?.disconnect(); this.stream?.getTracks().forEach((t) => t.stop()); this.proc = null; this.src = null; this.sink = null; this.stream = null; this.hot = false; this.onHot?.(false); }
 }
 
 // Minimal typings for the Web Speech API (not in lib.dom for all TS configs).

@@ -159,3 +159,7 @@ button { font-family: inherit; cursor: pointer; }
 .hud .meter { position: relative; width: 170px; height: 8px; background: #333; border-radius: 4px; margin: 4px 0 2px; overflow: hidden; }
 .hud .meter i { display: block; height: 100%; border-radius: 4px; transition: width .4s ease-out, background .4s; }
 .hud .meter s { position: absolute; top: 0; width: 1px; height: 100%; background: #ffffff88; }
+
+.nametag.dim { opacity: .3; }
+.nametag.lit .nm { box-shadow: 0 0 0 2px var(--c), 0 0 14px var(--c); }
+.nametag.lit .st { opacity: 1; color: #fff; }

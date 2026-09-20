@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 import boto3
 
 REGION = os.environ.get("BEDROCK_REGION", os.environ.get("AWS_REGION", "ap-south-1"))
-MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-haiku-4-5-20251001-v1:0")
+MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "amazon.nova-lite-v1:0")
 
 ddb = boto3.resource("dynamodb")
 s3 = boto3.client("s3")

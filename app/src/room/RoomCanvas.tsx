@@ -15,9 +15,16 @@ async function ensureAssets() {
   imgs.loaded = true;
 }
 
-export function RoomCanvas({ interactiveHover, onHover }: { interactiveHover?: boolean; onHover?: (obj: string | null) => void }) {
+/** Which agent works each object, for the exploded (How it works) view. */
+export const OBJ_AGENT: Record<string, AgentName | undefined> = { listenerDesk: "listener", crt: "listener", board: "analyst", gauge: "analyst", cabinet: "archivist", lever: "guardian", booth: "guardian", printer: "reporter" };
+export function litAgent(hover: string | null, name: AgentName) { return !!hover && (hover === name || OBJ_AGENT[hover] === name); }
+export function litObject(hover: string | null, key: string) { return !!hover && (hover === key || OBJ_AGENT[key] === hover); }
+
+export function RoomCanvas({ interactiveHover, onHover, highlight }: { interactiveHover?: boolean; onHover?: (obj: string | null) => void; highlight?: string | null }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const hoverRef = useRef<string | null>(null);
+  // A highlight pushed from outside (a legend row) drives the same dimming as a canvas hover.
+  useEffect(() => { if (highlight !== undefined) hoverRef.current = highlight; }, [highlight]);
 
   useEffect(() => {
     const canvas = ref.current!; const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
@@ -107,7 +114,7 @@ function draw(ctx: CanvasRenderingContext2D, hover: string | null) {
   const exploded = st.mode === "exploded"; const dimOthers = exploded && hover;
   if (imgs.bg) ctx.drawImage(imgs.bg, 0, 0, W, H); else { px(ctx, 0, 0, W, H, "#2a1d10"); ctx.fillStyle = "#e8e2d6"; ctx.font = "28px monospace"; ctx.fillText("room assets loading…", 40, 60); }
 
-  const alpha = (key: string) => (dimOthers && hover !== key ? 0.35 : 1);
+  const alpha = (key: string) => (dimOthers && !litObject(hover, key) ? 0.35 : 1);
   const withAlpha = (key: string, fn: () => void) => { ctx.globalAlpha = alpha(key); fn(); ctx.globalAlpha = 1; };
 
   // Gauge: translucent dial over the painted one, with our needle.
@@ -175,7 +182,7 @@ function draw(ctx: CanvasRenderingContext2D, hover: string | null) {
   const sorted = [...ORDER].sort((a, b) => sim.agents[a].y - sim.agents[b].y);
   for (const name of sorted) {
     const a = sim.agents[name]; const img = imgs.sprites[name]; const h = SCENE.spriteHeight * SCENE.depth(a.y);
-    ctx.globalAlpha = dimOthers && hover !== name ? 0.35 : 1;
+    ctx.globalAlpha = dimOthers && !litAgent(hover, name) ? 0.35 : 1;
     ctx.fillStyle = "#00000044"; ctx.beginPath(); ctx.ellipse(a.x, a.y - 2, h * 0.22, h * 0.07, 0, 0, Math.PI * 2); ctx.fill();
     const bob = a.pose === "walk" ? Math.abs(Math.sin(a.frame / 110)) * 6 : a.pose === "act" ? Math.abs(Math.sin(t / 160)) * 3 : Math.sin(t / 700) * 1.5;
     const tilt = a.pose === "walk" ? Math.sin(a.frame / 110) * 0.06 : a.pose === "act" ? Math.sin(t / 160) * 0.05 : 0;
@@ -199,5 +206,13 @@ function draw(ctx: CanvasRenderingContext2D, hover: string | null) {
     for (const [k, p] of Object.entries(SCENE.home)) { ctx.fillStyle = "#ffea00"; ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.fillText("home:" + k, p.x + 8, p.y - 6); }
     const f = SCENE.floor; ctx.strokeStyle = "#ffea00"; ctx.strokeRect(f.x0, f.y0, f.x1 - f.x0, f.y1 - f.y0);
   }
-  if (exploded && hover && (SCENE.objects as Record<string, { x: number; y: number; w: number; h: number }>)[hover]) { const b = SCENE.objects[hover as ObjKey]; ctx.strokeStyle = "#f0b27a"; ctx.lineWidth = 4; ctx.strokeRect(b.x - 6, b.y - 6, b.w + 12, b.h + 12); }
+  if (exploded && hover) {
+    // Outline every object the hovered thing owns: the object itself, or all of the hovered agent's objects.
+    for (const [k, b] of Object.entries(SCENE.objects) as [ObjKey, { x: number; y: number; w: number; h: number }][]) {
+      if (!litObject(hover, k) || k === "phone") continue;
+      ctx.strokeStyle = "#f0b27a"; ctx.lineWidth = 4; ctx.strokeRect(b.x - 6, b.y - 6, b.w + 12, b.h + 12);
+    }
+    // And a soft ring under the lit agent's feet.
+    for (const name of ORDER) if (litAgent(hover, name)) { const a = sim.agents[name]; ctx.strokeStyle = "#f0b27a"; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(a.x, a.y - 2, 34, 12, 0, 0, Math.PI * 2); ctx.stroke(); }
+  }
 }

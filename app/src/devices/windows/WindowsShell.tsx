@@ -150,7 +150,7 @@ function Meet({ sock, speaking }: { sock: DrillSocket; speaking: boolean }) {
   const hint = useDrill((s) => s.hint);
   const [sheet, setSheet] = useState(false);
   const [shared, setShared] = useState(false);
-  const [mic, setMic] = useState(true);
+  const mic = useDrill((s) => s.voice.micOn); const toggleMic = useDrill((s) => s.toggleMic);
   const [cam, setCam] = useState(true);
   const [hand, setHand] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -182,7 +182,7 @@ function Meet({ sock, speaking }: { sock: DrillSocket; speaking: boolean }) {
       {menu && <div style={{ position: "absolute", right: 60, bottom: 70, background: "#fff", color: "#202124", borderRadius: 8, padding: 6, fontSize: 13, zIndex: 6, boxShadow: "0 8px 20px #0006" }}>{["Change layout", "Captions", "Settings", "Report abuse"].map((m) => <div key={m} style={{ padding: "8px 14px" }} onClick={() => setMenu(false)}>{m}</div>)}</div>}
       <div className="bar">
         <div className="info">{drill.caller.org}</div>
-        <button onClick={() => { setMic((m) => !m); if (mic) sock.send({ type: "device.event", kind: "muted" }); }} title="Mic">{mic ? <MdMic size={18} /> : <MdMicOff size={18} />}</button>
+        <button onClick={() => { if (mic) sock.send({ type: "device.event", kind: "muted" }); toggleMic?.(); }} title={mic ? "Mute (stop mic)" : "Unmute (start mic)"} style={mic ? undefined : { background: "#ea4335" }}>{mic ? <MdMic size={18} /> : <MdMicOff size={18} />}</button>
         <button onClick={() => { setCam((c) => !c); if (cam) sock.send({ type: "device.event", kind: "camera_off" }); }} title="Camera">{cam ? <MdVideocam size={18} /> : <MdVideocamOff size={18} />}</button>
         <button title="Present now" className={hint === "share" && !shared ? "hint-target" : ""} onClick={() => { setSheet(true); sock.send({ type: "device.event", kind: "share_shown" }); }}><MdScreenShare size={18} /></button>
         <button onClick={() => setHand((h) => !h)} title="Raise hand" style={hand ? { background: "#fbbc04", color: "#202124" } : undefined}><MdBackHand size={18} /></button>

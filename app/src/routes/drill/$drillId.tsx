@@ -37,8 +37,6 @@ function DrillPage() {
   const tripped = useDrill((s) => s.tripped);
   const [speaking, setSpeaking] = useState(false);
   const [lifted, setLifted] = useState(false);
-  const [micOn, setMicOn] = useState(false);
-  const [micMode, setMicMode] = useState<SttMode>("typed");
   const [text, setText] = useState("");
   const [elapsed, setElapsed] = useState(0);
   const [devScale, setDevScale] = useState(1);
@@ -77,32 +75,59 @@ function DrillPage() {
   useEffect(() => { if (callState !== "active") return; const t = setInterval(() => setElapsed((s) => s + 1), 1000); return () => clearInterval(t); }, [callState]);
   useEffect(() => { if (callState === "active") { ensureAudio(); if (!auto && useDrill.getState().drill?.channel !== "whatsapp-group") void startMic(); } if (callState === "ended") stopMic(); }, [callState]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const voice = useDrill((s) => s.voice);
+  const micOn = voice.micOn;
+  const startingRef = useRef(false);
+  const setVoice = (patch: Partial<typeof voice>) => useDrill.getState().set({ voice: { ...useDrill.getState().voice, ...patch } });
+
+  /** Start listening. Server-side STT (Transcribe / Vosk) gets raw PCM over the socket; else the browser recognizer; else typing. Safe to call twice. */
   async function startMic() {
-    const sock = sockRef.current!; const d = useDrill.getState().drill;
-    if (!d || micOn) return;
+    const sock = sockRef.current; const d = useDrill.getState().drill;
+    if (!sock || !d || startingRef.current || micRef.current?.active || recRef.current) return;
+    if (useDrill.getState().callState !== "active") return;
+    startingRef.current = true;
     const lang = d.language === "hi" ? "hi-IN" : "en-IN";
-    const setVoice = (stt: SttMode, note?: string) => useDrill.getState().set({ voice: { ...useDrill.getState().voice, stt, note } });
     const serverStt = d.features.stt && d.features.stt !== "none" ? d.features.stt : null;
-    if (serverStt) {
-      // Server-side listening: raw 16 kHz PCM over the drill socket → Transcribe (AWS) or Vosk (local). Works in every browser with a mic.
-      try {
-        const mic = new Mic((buf) => sock.sendAudio(buf), (hot) => { if (hot) sock.send({ type: "audio.start", sampleRate: 16000, lang }); });
-        await mic.start(); micRef.current = mic; sock.send({ type: "audio.start", sampleRate: 16000, lang }); setMicMode(serverStt); setMicOn(true); setVoice(serverStt); return;
-      } catch (err) { setVoice("typed", `mic blocked: ${(err as Error).message}`); }
-    }
-    if (!hasBrowserSTT()) { setMicMode("typed"); setVoice("typed", serverStt ? "allow the microphone to talk" : "no listener on this server; type instead"); return; }
-    const rec = browserRecognizer(lang, (t) => sock.send({ type: "text.reply", text: t, source: "speech" }), (t) => useDrill.getState().set({ partial: t }), (msg) => { setMicOn(false); setMicMode("typed"); setVoice("typed", msg === "network" ? "browser speech needs Chrome + internet; type instead" : `speech recognition ${msg}; type instead`); });
-    if (rec) { recRef.current = rec; setMicMode("browser"); setMicOn(true); setVoice("browser"); return; }
-    setMicMode("typed"); setVoice("typed", "speech recognition unavailable; type instead");
+    try {
+      if (serverStt) {
+        try {
+          const mic = new Mic((buf) => sock.sendAudio(buf), (hot) => { if (hot) sock.send({ type: "audio.start", sampleRate: 16000, lang }); useDrill.getState().set({ hearing: hot ? Date.now() : 0 }); });
+          await mic.start(); micRef.current = mic; sock.send({ type: "audio.start", sampleRate: 16000, lang });
+          setVoice({ stt: serverStt, micOn: true, note: undefined }); return;
+        } catch (err) { setVoice({ stt: serverStt, micOn: false, note: `mic blocked: ${(err as Error).message.replace(/^\w+Error:\s*/, "")} · allow the microphone and press Start mic` }); return; }
+      }
+      if (!hasBrowserSTT()) { setVoice({ stt: "typed", micOn: false, note: "no speech recognition on this server or browser · type instead" }); return; }
+      const rec = browserRecognizer(lang, (t) => sock.send({ type: "text.reply", text: t, source: "speech" }), (t) => useDrill.getState().set({ partial: t, hearing: Date.now() }), (msg) => { recRef.current = null; setVoice({ stt: "typed", micOn: false, note: msg === "network" ? "browser speech needs Chrome + internet · type instead" : msg === "not-allowed" ? "mic blocked · allow the microphone and press Start mic" : `speech recognition ${msg} · type instead` }); });
+      if (rec) { recRef.current = rec; setVoice({ stt: "browser", micOn: true, note: undefined }); return; }
+      setVoice({ stt: "typed", micOn: false, note: "speech recognition unavailable · type instead" });
+    } finally { startingRef.current = false; }
   }
-  function stopMic() { micRef.current?.stop(); micRef.current = null; recRef.current?.stop(); recRef.current = null; sockRef.current?.send({ type: "audio.stop" }); setMicOn(false); }
+  function stopMic() {
+    micRef.current?.stop(); micRef.current = null; recRef.current?.stop(); recRef.current = null;
+    sockRef.current?.send({ type: "audio.stop" });
+    useDrill.getState().set({ partial: "", hearing: 0 });
+    setVoice({ micOn: false });
+  }
+  const toggleMic = () => { if (useDrill.getState().voice.micOn) stopMic(); else void startMic(); };
+  useEffect(() => { useDrill.getState().set({ toggleMic }); return () => { useDrill.getState().set({ toggleMic: null }); }; }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Live mic level for the pulse dot.
+  useEffect(() => { if (!micOn) return; const t = setInterval(() => setVoice({ micLevel: micRef.current?.level ?? 0 }), 120); return () => clearInterval(t); }, [micOn]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Space is push-to-talk while the mic is off: hold to listen, release to stop.
+  useEffect(() => {
+    let held = false;
+    const typing = () => { const el = document.activeElement; return Boolean(el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || (el as HTMLElement).isContentEditable)); };
+    const down = (e: KeyboardEvent) => { if (e.code !== "Space" || e.repeat || typing() || held) return; if (useDrill.getState().voice.micOn) return; e.preventDefault(); held = true; void startMic(); };
+    const up = (e: KeyboardEvent) => { if (e.code !== "Space" || !held) return; held = false; e.preventDefault(); stopMic(); };
+    window.addEventListener("keydown", down); window.addEventListener("keyup", up);
+    return () => { window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const sendText = (t: string) => { if (!t.trim()) return; sockRef.current?.send({ type: "text.reply", text: t.trim(), source: "typed" }); setText(""); };
 
   const hard = drill?.hardMode;
   const isLaptop = drill?.device === "laptop";
   const mm = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
   const lines = useMemo(() => transcript.slice(-5), [transcript]);
-  const console_ = <Console micOn={micOn} micMode={micMode} onMic={() => (micOn ? stopMic() : void startMic())} text={text} setText={setText} onSend={sendText} onHangup={() => sockRef.current?.send({ type: "device.event", kind: "call_ended" })} guardian={drill?.world.guardian.name ?? "family"} onCallGuardian={() => sockRef.current?.send({ type: "device.event", kind: "guardian_called" })} disabled={callState !== "active"} />;
+  const console_ = <Console onMic={toggleMic} text={text} setText={setText} onSend={sendText} onHangup={() => sockRef.current?.send({ type: "device.event", kind: "call_ended" })} guardian={drill?.world.guardian.name ?? "family"} onCallGuardian={() => sockRef.current?.send({ type: "device.event", kind: "guardian_called" })} disabled={callState !== "active"} />;
 
   return (
     <div className="drill">
@@ -142,26 +167,31 @@ function DrillPage() {
   );
 }
 
-function Console({ micOn, micMode, onMic, text, setText, onSend, onHangup, guardian, onCallGuardian, disabled }: { micOn: boolean; micMode: SttMode; onMic: () => void; text: string; setText: (t: string) => void; onSend: (t: string) => void; onHangup: () => void; guardian: string; onCallGuardian: () => void; disabled: boolean }) {
+function Console({ onMic, text, setText, onSend, onHangup, guardian, onCallGuardian, disabled }: { onMic: () => void; text: string; setText: (t: string) => void; onSend: (t: string) => void; onHangup: () => void; guardian: string; onCallGuardian: () => void; disabled: boolean }) {
   const voice = useDrill((s) => s.voice); const hint = useDrill((s) => s.hint); const lang = useDrill((s) => s.drill?.language); const hearing = useDrill((s) => s.hearing); const stance = useDrill((s) => s.stance);
   const [, tick] = useState(0);
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 400); return () => clearInterval(t); }, []);
   const HINTS: Record<string, string> = { share: "share your screen", otp: "read out the OTP", bank: "open your bank", link: "open the link and allow permissions", remote: "accept remote access", pay: "pay", notice: "read the ‘notice’" };
-  const live = Date.now() - hearing < 900;
-  const sttLabel: Record<SttMode, string> = { transcribe: "Amazon Transcribe", vosk: "Vosk (local)", browser: "browser speech", typed: "typing" };
+  const live = voice.micOn && Date.now() - hearing < 900;
+  const sttLabel: Record<string, string> = { transcribe: "Amazon Transcribe", vosk: "Vosk (local)", browser: "browser speech", typed: "typing" };
   const ttsLabel: Record<string, string> = { polly: "Amazon Polly", piper: "Piper (local)", browser: "browser voice", captions: "captions only" };
+  const micOn = voice.micOn;
+  const you = micOn ? `${sttLabel[voice.stt]} · mic on${live ? " · hearing you" : ""}` : `mic off · type or start mic`;
   return (
     <>
     <div className="voice-status">
       <span><i style={{ background: voice.tts === "captions" ? "#e4572e" : "#1db954" }} />caller: {ttsLabel[voice.tts]}</span>
-      <span><i style={{ background: micOn ? (live ? "#1db954" : "#8fd19e") : "#f0b27a", boxShadow: live ? "0 0 6px #1db954" : "none" }} />you: {sttLabel[voice.stt]}{micOn && live ? " · hearing you" : ""}{voice.note ? ` · ${voice.note}` : ""}</span>
+      <span><i style={{ background: micOn ? (live ? "#1db954" : "#8fd19e") : "#666", boxShadow: live ? "0 0 6px #1db954" : "none" }} />you: {you}{voice.note ? ` · ${voice.note}` : ""}</span>
       <span>· {lang === "hi" ? "हिंदी" : "English"}</span>
       {stance && stance !== "neutral" && <span className={`stance ${stance}`}>{stance === "comply" ? "you went along" : stance === "resist" ? "you pushed back" : "you leaked something"}</span>}
       {hint && <span style={{ marginLeft: "auto", color: "#f0b27a" }}>the caller is pushing you to <b>{HINTS[hint] ?? hint}</b> · highlighted on the device · you don't have to</span>}
     </div>
     <div className="console">
       <div className="lab">YOU<br />ON THE LINE</div>
-      <button className={`mic ${micOn ? "on" : ""}`} onClick={onMic} disabled={disabled} title={micMode}>{micOn ? <><MdMic size={16} /> listening</> : <><MdMicOff size={16} /> mic off</>}</button>
+      <button className={`mic ${micOn ? "on" : "off"}`} onClick={onMic} disabled={disabled} title={micOn ? "Stop the microphone" : "Start the microphone"}>
+        {micOn ? <><MdMicOff size={16} /> Stop mic<i className="lvl" style={{ transform: `scale(${1 + Math.min(1.6, voice.micLevel * 12)})`, opacity: live ? 1 : 0.45 }} /></> : <><MdMic size={16} /> Start mic</>}
+      </button>
+      {!micOn && !disabled && <span className="ptt">or hold <kbd>Space</kbd> to talk</span>}
       <form onSubmit={(e) => { e.preventDefault(); onSend(text); }}>
         <input placeholder={disabled ? "Answer the call first…" : micOn ? "…or type what you'd say" : "Type what you'd say and press Enter"} value={text} onChange={(e) => setText(e.target.value)} disabled={disabled} />
         <button type="submit" disabled={disabled} aria-label="Say it"><MdSend size={16} /></button>

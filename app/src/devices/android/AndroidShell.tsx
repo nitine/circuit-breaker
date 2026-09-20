@@ -128,7 +128,7 @@ function WhatsApp({ sock, speaking, onJudgeText, back, hint }: { sock: DrillSock
   const partial = useDrill((s) => s.partial);
   const family = useDrill((s) => s.family);
   const notifs = useDrill((s) => s.notifs).filter((n) => n.app === "whatsapp");
-  const [mute, setMute] = useState(false);
+  const micOn = useDrill((s) => s.voice.micOn); const toggleMic = useDrill((s) => s.toggleMic); const mute = !micOn;
   const [cam, setCam] = useState(true);
   const [speaker, setSpeaker] = useState(true);
   const [sheet, setSheet] = useState<null | "share">(null);
@@ -194,7 +194,7 @@ function WhatsApp({ sock, speaking, onJudgeText, back, hint }: { sock: DrillSock
           <div className="top"><div><b>{drill.caller.name}</b><span>{drill.caller.org} · {String(Math.floor(sec / 60)).padStart(2, "0")}:{String(sec % 60).padStart(2, "0")}</span></div><span style={{ marginLeft: "auto", fontSize: 11, background: "#fff2", padding: "2px 6px", borderRadius: 4, display: "flex", alignItems: "center", gap: 4 }}><MdLock size={11} /> encrypted</span></div>
           <div className="self">{!cam ? <span style={{ padding: 6, textAlign: "center" }}><MdVideocamOff size={22} /><br />Camera off</span> : partial ? <span style={{ padding: 6, textAlign: "center", color: "#cfe" }}>“{partial.slice(-40)}”</span> : "You"}</div>
           {shared && <div style={{ position: "absolute", left: 12, bottom: 12, background: "#e53935", color: "#fff", fontSize: 11, padding: "3px 8px", borderRadius: 4, zIndex: 2, display: "flex", alignItems: "center", gap: 4 }}><MdScreenShare size={12} /> Sharing your screen</div>}
-          {mute && <div style={{ position: "absolute", left: 12, bottom: shared ? 36 : 12, background: "#0008", color: "#fff", fontSize: 11, padding: "3px 8px", borderRadius: 4, zIndex: 2 }}><MdMicOff size={12} /> You're muted</div>}
+          {mute && <div style={{ position: "absolute", left: 12, bottom: shared ? 60 : 36, background: "#0008", color: "#fff", fontSize: 11, padding: "3px 8px", borderRadius: 4, zIndex: 2 }}><MdMicOff size={12} /> You're muted</div>}
           {last && !shared && !mute && <div style={{ position: "absolute", left: 12, right: 108, bottom: 36, color: "#fff", fontSize: 12, textShadow: "0 1px 2px #000", zIndex: 2, opacity: .85 }}>{last.text.slice(0, 110)}</div>}
         </div>
         {view === "chat" && (
@@ -229,7 +229,7 @@ function WhatsApp({ sock, speaking, onJudgeText, back, hint }: { sock: DrillSock
         )}
         <div className="controls">
           <button className={!cam ? "on" : ""} onClick={() => { setCam((c) => !c); if (cam) sock.send({ type: "device.event", kind: "camera_off" }); }} title="Camera">{cam ? <MdVideocam size={22} /> : <MdVideocamOff size={22} />}</button>
-          <button className={mute ? "on" : ""} onClick={() => { setMute((m) => !m); if (!mute) sock.send({ type: "device.event", kind: "muted" }); }} title="Mute">{mute ? <MdMicOff size={22} /> : <MdMic size={22} />}</button>
+          <button className={mute ? "on" : ""} onClick={() => { if (micOn) sock.send({ type: "device.event", kind: "muted" }); toggleMic?.(); }} title={mute ? "Unmute (start mic)" : "Mute (stop mic)"}>{mute ? <MdMicOff size={22} /> : <MdMic size={22} />}</button>
           <button className={speaker ? "" : "on"} onClick={() => setSpeaker((s) => !s)} title="Speaker"><MdVolumeUp size={22} /></button>
           <button title="Messages" className={(hint === "notice" && notifs.length && view === "call") || (hasFamilyReply && view === "call") ? "hint-target" : ""} onClick={() => setView(hasFamilyReply ? "guardian" : "chat")}><MdChat size={22} /></button>
           <button title="Share screen" className={hint === "share" && view === "call" && !shared ? "hint-target" : ""} onClick={() => { setSheet("share"); sock.send({ type: "device.event", kind: "share_shown" }); }}><MdScreenShare size={22} /></button>

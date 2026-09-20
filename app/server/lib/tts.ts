@@ -45,17 +45,25 @@ export async function synth(text: string, lang: "en" | "hi" | "kn", voiceHint = 
   try {
     const client = await polly();
     const { SynthesizeSpeechCommand } = await import("@aws-sdk/client-polly");
-    const voice = lang === "hi" ? cfg.pollyVoiceHi : cfg.pollyVoiceEn;
-    const out = await client.send(new SynthesizeSpeechCommand({
-      Text: text.slice(0, 1500),
-      VoiceId: voice as never,
-      Engine: cfg.pollyEngine as never,
-      OutputFormat: "mp3",
-      LanguageCode: (lang === "hi" ? "hi-IN" : "en-IN") as never,
-    }));
-    const bytes = await out.AudioStream?.transformToByteArray();
-    if (!bytes) return null;
-    return { audio: Buffer.from(bytes).toString("base64"), mime: "audio/mpeg" };
+    const female = voiceHint.includes("female");
+    // Polly has no male Indian-English neural voice, so male callers get a neural male voice (Matthew, then Brian) and
+    // female callers Kajal (en-IN, also speaks Hindi). Every choice falls back to the configured default if the region lacks it.
+    const candidates: { voice: string; language?: string }[] = lang === "hi"
+      ? [{ voice: cfg.pollyVoiceHi, language: "hi-IN" }]
+      : female ? [{ voice: cfg.pollyVoiceEn, language: "en-IN" }]
+      : [{ voice: cfg.pollyVoiceEnMale }, { voice: "Brian" }, { voice: cfg.pollyVoiceEn, language: "en-IN" }];
+    let lastErr: unknown;
+    for (const c of candidates) {
+      try {
+        const out = await client.send(new SynthesizeSpeechCommand({
+          Text: text.slice(0, 1500), VoiceId: c.voice as never, Engine: cfg.pollyEngine as never, OutputFormat: "mp3",
+          ...(c.language ? { LanguageCode: c.language as never } : {}),
+        }));
+        const bytes = await out.AudioStream?.transformToByteArray();
+        if (bytes) return { audio: Buffer.from(bytes).toString("base64"), mime: "audio/mpeg" };
+      } catch (e) { lastErr = e; }
+    }
+    throw lastErr ?? new Error("polly returned no audio");
   } catch (e) {
     console.warn("[tts] polly failed:", (e as Error).message);
     return null;

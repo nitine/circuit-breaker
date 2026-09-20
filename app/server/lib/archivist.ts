@@ -11,8 +11,8 @@ export function match(family: Family, recentScammerLines: string[], currentPhase
     const pw = new Set([...p.openers, ...p.resist].join(" ").toLowerCase().split(/[^a-z0-9₹]+/).filter((w) => w.length > 3));
     let hits = 0;
     for (const w of words) if (pw.has(w)) hits++;
-    const score = pw.size ? hits / Math.min(pw.size, Math.max(words.size, 1)) : 0;
-    const biased = score + (idx === currentPhaseIdx ? 0.15 : 0);
+    const score = pw.size ? hits / Math.max(1, Math.min(words.size, 24)) : 0; // share of the recent words that belong to this phase's script
+    const biased = score + (idx === currentPhaseIdx ? 0.1 : 0);
     if (biased > best.score) best = { idx, score: biased };
   });
   const phase = family.phases[best.idx];
@@ -20,7 +20,8 @@ export function match(family: Family, recentScammerLines: string[], currentPhase
   return {
     family: family.label,
     phase: phase.id,
-    score: Math.min(0.89, Math.round((0.55 + best.score * 0.5) * 100) / 100),
+    // Real overlap, 0..1, no floor and no cap: a verbatim playbook line scores high, an improvised one low. The playbook multiplier fires above 0.9.
+    score: Math.round(Math.max(0, Math.min(1, best.score)) * 100) / 100,
     next: next ? next.goal : "extraction complete or line dropped",
   };
 }
