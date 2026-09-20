@@ -6,6 +6,7 @@ import * as ddb from "aws-cdk-lib/aws-dynamodb";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as secrets from "aws-cdk-lib/aws-secretsmanager";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as sfn from "aws-cdk-lib/aws-stepfunctions";
 import * as tasks from "aws-cdk-lib/aws-stepfunctions-tasks";
@@ -21,6 +22,8 @@ import { Construct } from "constructs";
 export interface CbProps extends cdk.StackProps {
   /** Put CloudFront in front of the ALB (default true). */
   edge?: boolean;
+  /** Fallback OpenAI-compatible caller brain. */
+  llm?: { provider?: string; baseUrl?: string; model?: string; analystModel?: string };
   bedrockRegion: string; redModel: string; analystModel: string; guardrailId?: string; guardrailVersion?: string;
 }
 
@@ -78,6 +81,7 @@ export class CircuitBreakerStack extends cdk.Stack {
     // Network: public subnets only, no NAT. Fargate tasks get public IPs.
     const vpc = new ec2.Vpc(this, "Vpc", { maxAzs: 2, natGateways: 0, subnetConfiguration: [{ name: "public", subnetType: ec2.SubnetType.PUBLIC, cidrMask: 24 }] });
     const cluster = new ecs.Cluster(this, "Cluster", { vpc, containerInsights: true });
+    const llmSecret = new secrets.Secret(this, "LlmSecret", { secretName: "circuit-breaker/llm", description: "OpenAI-compatible API key for the fallback caller brain (OpenRouter / Groq)", generateSecretString: { secretStringTemplate: JSON.stringify({ LLM_API_KEY: "" }), generateStringKey: "unused", excludePunctuation: true } });
     const service = new ecsp.ApplicationLoadBalancedFargateService(this, "Drill", {
       cluster,
       cpu: 1024, memoryLimitMiB: 2048, desiredCount: 1,
@@ -94,7 +98,13 @@ export class CircuitBreakerStack extends cdk.Stack {
           BEDROCK_MODEL_ID: props.redModel, BEDROCK_ANALYST_MODEL_ID: props.analystModel,
           ...(props.guardrailId ? { BEDROCK_GUARDRAIL_ID: props.guardrailId, BEDROCK_GUARDRAIL_VERSION: props.guardrailVersion ?? "DRAFT" } : {}),
           DDB_TABLE: table.tableName, S3_PACKET_BUCKET: bucket.bucketName, EVENT_BUS_NAME: bus.eventBusName, DRILL_CAP: "200",
+          // Fallback caller brain: any OpenAI-compatible endpoint (OpenRouter, Groq). Used when Bedrock refuses, or always with LLM_PROVIDER=openai.
+          LLM_PROVIDER: props.llm?.provider ?? "auto", LLM_BASE_URL: props.llm?.baseUrl ?? "https://openrouter.ai/api/v1",
+          LLM_MODEL: props.llm?.model ?? "deepseek/deepseek-v4-flash", LLM_ANALYST_MODEL: props.llm?.analystModel ?? props.llm?.model ?? "deepseek/deepseek-v4-flash",
         },
+        // The API key lives in Secrets Manager, never in the task definition or the repo:
+        //   aws secretsmanager put-secret-value --secret-id circuit-breaker/llm --secret-string '{"LLM_API_KEY":"sk-or-..."}'
+        secrets: { LLM_API_KEY: ecs.Secret.fromSecretsManager(llmSecret, "LLM_API_KEY") },
       },
     });
     service.targetGroup.configureHealthCheck({ path: "/api/health", interval: cdk.Duration.seconds(30) });
@@ -107,6 +117,8 @@ export class CircuitBreakerStack extends cdk.Stack {
     role.addToPrincipalPolicy(new iam.PolicyStatement({ actions: ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream", "bedrock:Converse", "bedrock:ConverseStream", "bedrock:ApplyGuardrail"], resources: ["*"] }));
     role.addToPrincipalPolicy(new iam.PolicyStatement({ actions: ["transcribe:StartStreamTranscription", "polly:SynthesizeSpeech"], resources: ["*"] }));
     role.addToPrincipalPolicy(new iam.PolicyStatement({ actions: ["cloudwatch:PutMetricData"], resources: ["*"] }));
+
+    llmSecret.grantRead(service.taskDefinition.executionRole!);
 
     // Edge: CloudFront gives HTTPS (the mic needs a secure origin) and carries the WebSocket.
     // Optional (CB_EDGE=0): a brand-new AWS account cannot create CloudFront resources until Support verifies it.
@@ -140,5 +152,6 @@ export class CircuitBreakerStack extends cdk.Stack {
     new cdk.CfnOutput(this, "TableName", { value: table.tableName });
     new cdk.CfnOutput(this, "BucketName", { value: bucket.bucketName });
     new cdk.CfnOutput(this, "BusName", { value: bus.eventBusName });
+    new cdk.CfnOutput(this, "LlmSecret", { value: llmSecret.secretName });
   }
 }

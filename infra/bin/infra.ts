@@ -14,6 +14,7 @@ new CircuitBreakerStack(app, "CircuitBreaker", {
   guardrailId: process.env.BEDROCK_GUARDRAIL_ID,
   guardrailVersion: process.env.BEDROCK_GUARDRAIL_VERSION,
   edge: process.env.CB_EDGE !== "0",
+  llm: { provider: process.env.LLM_PROVIDER, baseUrl: process.env.LLM_BASE_URL, model: process.env.LLM_MODEL, analystModel: process.env.LLM_ANALYST_MODEL },
 });
 // Billing metrics only exist in us-east-1.
 new BillingAlarmsStack(app, "CircuitBreakerBilling", { env: { account, region: "us-east-1" }, thresholds: [60, 100, 140] });
