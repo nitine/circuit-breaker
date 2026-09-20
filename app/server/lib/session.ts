@@ -65,7 +65,19 @@ export class DrillSession {
   }
 
   start() {
-    this.emit({ type: "drill.state", drill: this.d });
+    // A socket that reconnects (task rolled, network blip) after the call was answered picks the call up mid-way: no second ring, the caller waits for the judge's next line.
+    const resumed = Boolean(this.d.startedAt) && this.rec.utterances.some((u) => u.speaker === "judge") && !this.d.endedAt;
+    this.emit({ type: "drill.state", drill: this.d, resumed });
+    if (resumed) {
+      this.answered = true;
+      const callerLines = this.rec.utterances.filter((u) => u.speaker === "scammer").length;
+      this.red.phaseIdx = Math.min(this.fam.phases.length - 1, Math.floor(callerLines / 2)); this.red.totalTurns = callerLines;
+      this.notifIdx = this.fam.notifications.filter((n) => n.afterTurn <= callerLines).length;
+      prewarm(this.d.id, this.fam, this.d.world, this.d.device);
+      this.emit({ type: "agent.state", agent: "listener", state: "act", bubble: "reconnected · the line is still open" });
+      this.armSilence();
+      return;
+    }
     if (!this.d.startedAt) { this.d.startedAt = Date.now(); touch(this.rec); }
     prewarm(this.d.id, this.fam, this.d.world, this.d.device);
     void provider().then((p) => this.emit({ type: "agent.state", agent: "archivist", state: "idle", bubble: p === "none" ? "playbook loaded · scripted caller" : `playbook loaded · live caller (${p})` }));

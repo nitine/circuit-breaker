@@ -31,7 +31,20 @@ async function probeOpenAI(): Promise<boolean> {
   return openaiAlive;
 }
 
+let bedrockProbe: Promise<void> | null = null; let bedrockProbedAt = 0;
+/** One tiny Converse call, cached 5 min: a refused account is marked dead so every caller uses the fallback tier without paying a failed round trip first. */
+async function probeBedrock() {
+  if (Date.now() - bedrockProbedAt < 5 * 60_000) return;
+  bedrockProbe ??= (async () => {
+    try { await converse({ modelId: cfg.analystModel, system: "Reply with OK.", messages: [{ role: "user", text: "OK?" }], maxTokens: 3, temperature: 0 }); }
+    catch (e) { const msg = (e as Error).message ?? ""; if (/not allowed|AccessDenied|not authorized|being verified|ResourceNotFound/i.test(msg)) bedrockDeadUntil = Date.now() + 5 * 60_000; }
+    finally { bedrockProbedAt = Date.now(); bedrockProbe = null; }
+  })();
+  await bedrockProbe;
+}
+
 export async function provider(): Promise<Provider> {
+  if (features().bedrock && PREFERRED !== "openai") await probeBedrock();
   const bedrockOk = features().bedrock && Date.now() > bedrockDeadUntil;
   if (PREFERRED === "bedrock") return bedrockOk ? "bedrock" : "none";
   if (PREFERRED === "openai") return (await probeOpenAI()) ? "openai" : "none";

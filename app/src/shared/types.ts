@@ -86,7 +86,7 @@ export interface Debrief {
 }
 
 export type ServerEvent =
-  | { type: "drill.state"; drill: DrillSummary; seq: number }
+  | { type: "drill.state"; drill: DrillSummary; resumed?: boolean; seq: number }
   | { type: "call.incoming"; seq: number }
   | { type: "transcript.partial"; speaker: "judge" | "scammer"; text: string; seq: number }
   | { type: "transcript.final"; speaker: "judge" | "scammer" | "member"; text: string; name?: string; seq: number }
