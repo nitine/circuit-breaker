@@ -131,3 +131,31 @@ button { font-family: inherit; cursor: pointer; }
 .report .tag.hot { border-color: #c0392b; color: #c0392b; }
 .report .stance-tag { display: inline-block; font-size: 9px; padding: 1px 5px; border-radius: 8px; margin-left: 6px; }
 .report .stance-tag.resist { background: #dcefdc; color: #1a7f3a } .report .stance-tag.comply { background: #fde9c9; color: #7a5a00 } .report .stance-tag.leak { background: #fadbd8; color: #c0392b }
+
+/* --- room reactions: name tags, log, labels ------------------------------------ */
+.nametag { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; gap: 1px; pointer-events: none; font-family: var(--font-pixel); letter-spacing: .5px; --c: #fff; transition: top .1s linear; }
+.nametag .nm { display: inline-flex; align-items: center; gap: 4px; background: #111111e6; color: #fff; padding: 2px 6px; border-radius: 3px; border: 1px solid var(--c); font-size: 1em; }
+.nametag .nm i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); box-shadow: 0 0 6px var(--c); }
+.nametag .st { font-family: var(--font-ui); font-size: .95em; color: #f4ecd8; background: #1a1410cc; padding: 1px 5px; border-radius: 3px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .8; }
+.nametag.busy .nm i { animation: blink .6s infinite; }
+.nametag.t-warn .st { color: #f0b27a; opacity: 1; }
+.nametag.t-hot .st { color: #fff; background: #e4572e; opacity: 1; font-weight: 700; }
+.nametag.t-good .st { color: #1a1410; background: #8fd19e; opacity: 1; }
+.nametag.t-info .st { color: #cfe6ff; opacity: 1; }
+.phase-label { position: absolute; transform: translate(-50%, -100%); background: #fff6d5; color: #6b5636; border: 2px solid #b58b3a; padding: 3px 8px; border-radius: 3px; font-family: var(--font-pixel); letter-spacing: 1px; white-space: nowrap; pointer-events: none; animation: popIn .3s ease-out; }
+.want-label { position: absolute; z-index: 7; background: #e4572e; color: #fff; padding: 4px 10px; border-radius: 4px; font-family: var(--font-ui); font-weight: 600; white-space: nowrap; pointer-events: none; box-shadow: 0 2px 0 #1a1410; animation: popIn .3s ease-out; }
+
+.room-log { display: flex; flex-direction: column; gap: 2px; padding: 6px 10px; background: #0b0a08; border-top: 1px solid #2a2622; }
+.room-log .row { display: grid; grid-template-columns: 74px 1fr auto; gap: 8px; align-items: baseline; background: #161311; color: #f4ecd8; padding: 4px 8px; border-radius: 4px; font-family: var(--font-ui); font-size: 12px; border-left: 3px solid #444; animation: popIn .25s ease-out; }
+.room-log .row .ag { font-family: var(--font-pixel); font-size: 8px; letter-spacing: 1px; }
+.room-log .row .tx { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.room-log .row.t-calm { color: #8a8378; }
+.room-log .row .dl { font-family: var(--font-mono); font-weight: 700; color: #f0b27a; }
+.room-log .row.t-hot { border-left-color: #e4572e; }
+.room-log .row.t-hot .dl { color: #ff8a65; }
+.room-log .row.t-warn { border-left-color: #f0b27a; }
+.room-log .row.t-good { border-left-color: #1db954; }
+.room-log .row.t-info { border-left-color: #2fa7d9; }
+.hud .meter { position: relative; width: 170px; height: 8px; background: #333; border-radius: 4px; margin: 4px 0 2px; overflow: hidden; }
+.hud .meter i { display: block; height: 100%; border-radius: 4px; transition: width .4s ease-out, background .4s; }
+.hud .meter s { position: absolute; top: 0; width: 1px; height: 100%; background: #ffffff88; }

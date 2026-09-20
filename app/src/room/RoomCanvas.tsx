@@ -94,7 +94,9 @@ function step(dt: number) {
       if (now - task.started >= task.ms) { a.queue.shift(); a.pose = "idle"; }
     }
   }
-  sim.needle += (useRoom.getState().index - sim.needle) * Math.min(1, dt / 400);
+  sim.needle += (useRoom.getState().index + sim.kick - sim.needle) * Math.min(1, dt / 400);
+  sim.kick *= Math.max(0, 1 - dt / 350); // needle overshoots on a hit, then settles
+  const cutoff = Date.now() - 1600; sim.pops = sim.pops.filter((p) => p.ts > cutoff);
 }
 
 function px(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, c: string) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
@@ -119,6 +121,7 @@ function draw(ctx: CanvasRenderingContext2D, hover: string | null) {
     ctx.strokeStyle = "#1a1410"; ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(na) * (r - 16), cy + Math.sin(na) * (r - 16)); ctx.stroke();
     ctx.fillStyle = "#e4572e"; ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = "#1a1410"; ctx.font = "bold 20px monospace"; ctx.textAlign = "center"; ctx.fillText(String(Math.round(sim.needle)), cx, cy + r - 14); ctx.textAlign = "left";
+    if (sim.kick > 1) { ctx.strokeStyle = `rgba(228,87,46,${Math.min(0.8, sim.kick / 12)})`; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(cx, cy, r + 4, 0, Math.PI * 2); ctx.stroke(); }
     if ((st.ladder === "warn" || st.ladder === "nudge") && Math.floor(t / 300) % 2 === 0) { ctx.fillStyle = st.ladder === "nudge" ? "#e4572e" : "#f0b27a"; ctx.beginPath(); ctx.arc(g.x + g.w - 8, g.y + 10, 7, 0, Math.PI * 2); ctx.fill(); }
   });
   // Board: pinned cards on the painted cork.
@@ -147,6 +150,7 @@ function draw(ctx: CanvasRenderingContext2D, hover: string | null) {
     px(ctx, ix, iy, iw, ih, "#4a4a4a"); px(ctx, ix + iw * 0.35, iy + 6, iw * 0.3, ih - 12, "#151515");
     const knobH = 18; const knobY = sim.leverDown ? iy + ih - knobH - 6 : iy + 6;
     px(ctx, ix + 2, knobY, iw - 4, knobH, "#e4572e"); px(ctx, ix + 4, knobY + 3, iw - 8, 5, "#ff8a65"); px(ctx, ix + 2, knobY + knobH - 3, iw - 4, 3, "#a83a1e");
+    if (st.ladder === "nudge" && !sim.leverDown) { ctx.strokeStyle = `rgba(255,138,101,${0.4 + 0.4 * Math.abs(Math.sin(t / 250))})`; ctx.lineWidth = 5; ctx.strokeRect(ix - 6, iy - 6, iw + 12, ih + 12); }
     ctx.fillStyle = sim.leverDown ? "#e4572e" : "#1db954"; ctx.beginPath(); ctx.arc(l.x + l.w * 0.15, l.y + l.h - 10, 4, 0, Math.PI * 2); ctx.fill();
     if (sim.leverDown && Math.floor(t / 250) % 2 === 0) { ctx.fillStyle = "#e4572e"; ctx.beginPath(); ctx.arc(l.x + l.w * 0.85, l.y + l.h - 10, 4, 0, Math.PI * 2); ctx.fill(); }
   });
@@ -162,6 +166,11 @@ function draw(ctx: CanvasRenderingContext2D, hover: string | null) {
     if (st.phoneLifted && imgs.bg) { const c = sample(ctx, p.x - 12, p.y + p.h + 8); px(ctx, p.x - 6, p.y - 6, p.w + 12, p.h + 12, c); ctx.strokeStyle = "#f0b27a"; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.strokeRect(p.x - 2, p.y - 2, p.w + 4, p.h + 4); ctx.setLineDash([]); }
     if (st.phoneRinging && !st.phoneLifted) { const k = Math.floor(t / 180) % 3; ctx.strokeStyle = "#f0b27a"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p.x + p.w / 2, p.y + p.h / 2, 30 + k * 12, 0, Math.PI * 2); ctx.stroke(); ctx.fillStyle = "#ffffffaa"; ctx.fillRect(p.x, p.y, p.w, p.h); }
   });
+  // Pulse ring on the object a signal came from (your desk, the listening desk).
+  if (st.pulse && Date.now() < st.pulse.until) {
+    const b = (SCENE.objects as Record<string, { x: number; y: number; w: number; h: number }>)[st.pulse.key];
+    if (b) { const k = ((st.pulse.until - Date.now()) % 700) / 700; ctx.strokeStyle = `rgba(240,178,122,${0.9 - k * 0.8})`; ctx.lineWidth = 4; ctx.strokeRect(b.x - 6 - k * 14, b.y - 6 - k * 14, b.w + 12 + k * 28, b.h + 12 + k * 28); }
+  }
   // Agents, sorted by feet y so nearer ones draw on top.
   const sorted = [...ORDER].sort((a, b) => sim.agents[a].y - sim.agents[b].y);
   for (const name of sorted) {
@@ -175,6 +184,13 @@ function draw(ctx: CanvasRenderingContext2D, hover: string | null) {
       ctx.save(); ctx.translate(a.x, a.y - bob); ctx.rotate(tilt); ctx.scale(a.facing, 1); ctx.drawImage(img, -w / 2, -h, w, h); ctx.restore();
     } else { px(ctx, a.x - 16, a.y - h - bob, 32, h, "#c0392b"); }
     ctx.globalAlpha = 1;
+  }
+  // Floating deltas rising off the gauge and the lever.
+  for (const p of sim.pops) {
+    const age = (Date.now() - p.ts) / 1600; const y = p.y - age * 70;
+    ctx.globalAlpha = 1 - age; ctx.font = "bold 30px monospace"; ctx.textAlign = "center";
+    ctx.lineWidth = 5; ctx.strokeStyle = "#1a1410"; ctx.strokeText(p.text, p.x, y); ctx.fillStyle = p.color; ctx.fillText(p.text, p.x, y);
+    ctx.textAlign = "left"; ctx.globalAlpha = 1;
   }
   if (typeof location !== "undefined" && location.search.includes("roomdebug")) {
     ctx.lineWidth = 2; ctx.font = "14px monospace";
