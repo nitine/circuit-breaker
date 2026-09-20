@@ -168,7 +168,7 @@
 .debrief .tape .mark:nth-child(odd) { top: auto; bottom: 4px; }
 .debrief .meta { padding-right: 150px; }
 /* live transcript sits low so the gauge, lever and agent bubbles stay visible */
-.drill .roomcol .transcript { top: auto; bottom: 10px; max-height: 46%; }
+.drill .roomcol .transcript { top: auto; bottom: 10px; max-height: 36%; width: 44%; }
 .drill .stage.laptop .console { gap: 6px; padding: 8px 10px; }
 .drill .stage.laptop .console .lab { width: 44px; font-size: 8px; }
 .drill .stage.laptop .console button { padding: 8px 10px; font-size: 12px; }
@@ -179,3 +179,8 @@
 .drill .stage.laptop .console button { white-space: nowrap; }
 .drill .stage.laptop .console form { min-width: 120px; }
 .drill .stage.laptop .voice-status { font-size: 10.5px; gap: 10px; }
+
+.drill .stage.laptop .hud { padding: 4px 8px; }
+.drill .stage.laptop .hud b { font-size: 12px; }
+.drill .stage.laptop .hud small, .drill .stage.laptop .hud .meter { display: none; }
+.drill .stage.laptop .roomcol .transcript { max-height: 30%; }

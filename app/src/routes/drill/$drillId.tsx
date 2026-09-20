@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Room } from "~/room/Room";
+import { Room, RoomLog } from "~/room/Room";
 import { useRoom } from "~/room/roomStore";
 import { useDrill } from "~/drill/drillStore";
 import { DrillSocket } from "~/drill/socket";
@@ -131,6 +131,7 @@ function DrillPage() {
                 </div>
               )}
             </Room>
+            {lifted && <RoomLog rows={isLaptop ? 4 : 5} />}
             {lifted && console_}
           </div>
         )}

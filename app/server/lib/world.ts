@@ -89,8 +89,9 @@ export async function buildWorld(persona: Persona | null, personaText: string | 
   try {
     const out = await chat({ system, messages: [{ role: "user", text: `Person: ${context}\nCase family: ${family.label}` }], maxTokens: local ? 600 : 1500, temperature: 0.6, tier: "fast", json: true });
     const json = extractJson(out) as Partial<World> & { guardian?: Partial<World["guardian"]>; bank?: Partial<World["bank"]> };
-    const name = (json.personaName ?? base.personaName).trim();
-    const guardian = json.guardian?.name ? { ...base.guardian, ...json.guardian, name: json.guardian.name.trim() } : base.guardian;
+    // A named persona keeps its identity and guardian (their lines are written for them); the model only furnishes the phone.
+    const name = persona ? base.personaName : (json.personaName ?? base.personaName).trim();
+    const guardian = !persona && json.guardian?.name ? { ...base.guardian, ...json.guardian, name: json.guardian.name.trim() } : base.guardian;
     const own = (n: string) => n.trim().toLowerCase() === name.toLowerCase() || n.trim().toLowerCase() === name.split(" ")[0].toLowerCase();
     const dedupe = <T extends { name: string }>(xs: T[]) => { const seen = new Set<string>(); return xs.filter((x) => x?.name && !own(x.name) && !seen.has(x.name.toLowerCase()) && seen.add(x.name.toLowerCase())); };
     let contacts = dedupe([...(Array.isArray(json.contacts) ? json.contacts : []), ...base.contacts.map((c) => (c.name === base.guardian.name ? { ...c, name: guardian.name, relation: guardian.relation } : c))]);
@@ -104,7 +105,7 @@ export async function buildWorld(persona: Persona | null, personaText: string | 
     const bank = json.bank && txns.length >= 3 && new Set(txns.map((t) => t.desc)).size >= 3 ? { ...base.bank, ...json.bank, txns: [...txns, ...base.bank.txns].slice(0, 6), name: "Bharat Bank" } : { ...base.bank, balance: typeof json.bank?.balance === "number" && json.bank.balance > 500 ? json.bank.balance : base.bank.balance };
     const seenSubj = new Set<string>();
     const mails = [...(Array.isArray(json.mails) ? json.mails : []), ...base.mails].filter((m) => m?.subj && m?.from && !seenSubj.has(m.subj.toLowerCase()) && seenSubj.add(m.subj.toLowerCase())).slice(0, 5);
-    return { ...base, personaName: name, personaAge: json.personaAge ?? base.personaAge, city: json.city ?? base.city, contacts, guardian, smsThreads, bank, chats, mails };
+    return { ...base, personaName: name, personaAge: persona ? base.personaAge : json.personaAge ?? base.personaAge, city: persona ? base.city : json.city ?? base.city, contacts, guardian, smsThreads, bank, chats, mails };
   } catch (e) {
     console.warn("[world] llm world failed, using template:", (e as Error).message);
     return base;
