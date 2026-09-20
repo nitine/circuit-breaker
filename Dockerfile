@@ -12,5 +12,7 @@ FROM node:22-alpine AS run
 ENV NODE_ENV=production PORT=3000 HOST=0.0.0.0
 WORKDIR /repo/app
 COPY --from=build /repo/app/.output ./.output
+# The page and document templates are read from disk at runtime (corpus/ui/*.html); the playbooks are bundled.
+COPY --from=build /repo/corpus /repo/corpus
 EXPOSE 3000
 CMD ["node", ".output/server/index.mjs"]

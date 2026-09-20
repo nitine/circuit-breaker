@@ -115,6 +115,10 @@ So a hundred judge drills is roughly $20 plus the daily fixed cost. The billing 
 
 ## 6. Updating
 
+Every push to `main` deploys through GitHub Actions (`.github/workflows/deploy.yml`) using an OIDC role, so no AWS keys live in GitHub. One-time setup: run `infra/scripts/github-oidc.sh` with admin credentials, then `gh variable set DEPLOY_ENABLED --body true`. The workflow reads the domain, edge, alarm and model settings from repository variables (`gh variable list`). Pull requests run typecheck and build only.
+
+Manual alternative:
+
 Push a change, then re-run `npm run deploy` from `infra/`. CDK rebuilds the Docker image, pushes it to ECR and rolls the Fargate service with zero downtime. Only the app or Lambda code that changed is rebuilt.
 
 ## 7. Tearing down
